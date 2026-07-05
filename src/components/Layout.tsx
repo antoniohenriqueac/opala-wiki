@@ -3,6 +3,9 @@ import { loadManifest } from '../lib/wiki-data';
 import { resolveRoute, withBase } from '../lib/paths';
 import { isModifiedClick, navigate } from '../lib/router';
 
+const DONATE_PIX_URL =
+  'https://nubank.com.br/cobrar/5hux2/6a4aa55b-32b6-44ca-a71f-85d7fc5ef765';
+
 const NAV = [
   { href: '/hunts', label: 'Hunt Finder', icon: '⚔' },
   { href: '/bestiary', label: 'Bestiário', icon: '👹' },
@@ -78,6 +81,19 @@ export function Layout({ url = '/hunts', children }: LayoutProps) {
         >
           {theme === 'dark' ? '☀ Claro' : '☾ Escuro'}
         </button>
+        <div class="donate-block">
+          <div class="donate-label">Apoie o projeto</div>
+          <img
+            class="donate-qr"
+            src={withBase('donate-pix-qr.png')}
+            alt="QR Code Pix para doação"
+            width="112"
+            height="112"
+          />
+          <a class="donate-link" href={DONATE_PIX_URL} target="_blank" rel="noopener">
+            Doar via Pix
+          </a>
+        </div>
         <div class="sidebar-footer">
           {lastUpdated && <div>Sync: {lastUpdated}</div>}
           <div>

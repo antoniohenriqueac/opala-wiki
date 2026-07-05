@@ -433,6 +433,79 @@ button {
 
 .theme-toggle:hover { border-color: var(--border-strong); }
 
+.donate-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-muted);
+  text-align: center;
+}
+
+.donate-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.02em;
+}
+
+.donate-qr {
+  display: block;
+  width: 112px;
+  height: 112px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.donate-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--gold-glow);
+  color: var(--gold);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.donate-link:hover {
+  background: rgba(241, 176, 45, 0.18);
+  border-color: var(--gold);
+  text-decoration: none;
+}
+
+@media (max-width: 768px) {
+  .donate-block {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .donate-label {
+    width: 100%;
+  }
+
+  .donate-qr {
+    width: 72px;
+    height: 72px;
+  }
+
+  .donate-link {
+    width: auto;
+    flex: 1;
+    min-width: 120px;
+  }
+}
+
 /* Scrollbar — modal + página */
 html,
 body,
