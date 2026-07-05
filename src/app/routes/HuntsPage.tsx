@@ -29,7 +29,13 @@ export function HuntsPage(_props: { path?: string }) {
   const patch = (p: Partial<HuntFilterState>) => setFilters((s) => ({ ...s, ...p }));
 
   const results = useMemo(() => {
-    const settings = buildCalcSettings(filters.partySize, filters.charLevel, filters.vocation);
+    const settings = buildCalcSettings(
+      filters.partySize,
+      filters.charLevel,
+      filters.vocation,
+      undefined,
+      0,
+    );
     const q = filters.query.trim().toLowerCase();
 
     let list = (data.hunts || [])
@@ -47,7 +53,8 @@ export function HuntsPage(_props: { path?: string }) {
       })
       .map((h) => {
         const monsters = huntMonsters(h, indexes.monById);
-        return computeHuntMetrics(h, monsters, indexes.itemById, settings);
+        const huntSettings = { ...settings, lure: h.maxLure ?? settings.lure };
+        return computeHuntMetrics(h, monsters, indexes.itemById, huntSettings);
       })
       .filter(
         (m) =>

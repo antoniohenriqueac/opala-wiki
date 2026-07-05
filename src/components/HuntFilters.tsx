@@ -18,7 +18,7 @@ interface HuntFiltersProps {
 
 const SORTS: { id: HuntSort; label: string }[] = [
   { id: 'xp', label: 'Melhor XP' },
-  { id: 'profit', label: 'Melhor loot' },
+  { id: 'profit', label: 'Melhor Gold/h' },
   { id: 'level', label: 'Level' },
   { id: 'name', label: 'Nome' },
 ];

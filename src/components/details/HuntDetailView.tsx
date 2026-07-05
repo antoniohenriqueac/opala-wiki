@@ -1,13 +1,28 @@
+import { useMemo, useState, useEffect } from 'preact/hooks';
 import { SpriteIcon } from '../SpriteIcon';
 import { XPCalculator } from '../XPCalculator';
+import { LootFilter } from '../LootFilter';
+import { ProfitSummary } from '../ProfitSummary';
+import { ItemHoverTip } from '../ItemHoverTip';
 import {
   fmt,
   fmtChance,
   chanceClass,
   RARITY_BANDS,
   rarityOf,
+  lootRarityClass,
 } from '../../lib/format';
-import { huntMonsters } from '../../lib/hunt-metrics';
+import {
+  huntMonsters,
+  collectHuntLoot,
+  computeHuntMetrics,
+  buildCalcSettings,
+} from '../../lib/hunt-metrics';
+import {
+  loadExcludedLootIds,
+  saveExcludedLootIds,
+  junkItemIds,
+} from '../../lib/loot-filter';
 import type { Hunt, LootEntry, WikiData } from '../../lib/types';
 import type { WikiIndexes } from '../../lib/indexes';
 import type { DetailTarget } from '../../context/DetailContext';
@@ -22,20 +37,44 @@ interface Props {
 export function HuntDetailView({ h, data, indexes, openDetail }: Props) {
   const { monById, itemById } = indexes;
   const mons = huntMonsters(h, monById);
-  const lootMap: Record<number, LootEntry & { from: string }> = {};
+  const lootEntries = useMemo(() => collectHuntLoot(h, monById), [h, monById]);
 
-  for (const mn of mons) {
-    for (const d of mn.loot || []) {
-      if (!d.itemId) continue;
-      const cur = lootMap[d.itemId];
-      const chance = d.chance || 0;
-      if (!cur || chance > cur.chance) {
-        lootMap[d.itemId] = { ...d, from: mn.name };
-      }
-    }
-  }
+  const [excludedIds, setExcludedIds] = useState<Set<number>>(() => loadExcludedLootIds(h.id));
 
-  const allLoot = Object.values(lootMap).sort((a, b) => b.chance - a.chance);
+  useEffect(() => {
+    saveExcludedLootIds(h.id, excludedIds);
+  }, [h.id, excludedIds]);
+
+  const settings = useMemo(
+    () => buildCalcSettings(1, h.recommendedLevel ?? 50, 'ALL', h),
+    [h],
+  );
+
+  const metrics = useMemo(
+    () => computeHuntMetrics(h, mons, itemById, settings, { excludedLootIds: excludedIds }),
+    [h, mons, itemById, settings, excludedIds],
+  );
+
+  const toggleLoot = (itemId: number) => {
+    setExcludedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) next.delete(itemId);
+      else next.add(itemId);
+      return next;
+    });
+  };
+
+  const clearFilter = () => setExcludedIds(new Set());
+
+  const filterJunk = () => {
+    const ids = junkItemIds(
+      data.items,
+      lootEntries.map((e) => e.itemId),
+    );
+    setExcludedIds(new Set(ids));
+  };
+
+  const allLoot = lootEntries;
   const groups: Record<string, typeof allLoot> = {};
   for (const b of RARITY_BANDS) groups[b.key] = [];
   for (const d of allLoot) groups[rarityOf(d.chance).key].push(d);
@@ -43,13 +82,22 @@ export function HuntDetailView({ h, data, indexes, openDetail }: Props) {
   const renderSlot = (d: LootEntry, bandKey: string) => {
     const it = itemById[d.itemId];
     if (!it) return null;
+    const rClass = lootRarityClass(d.chance || 0);
     return (
-      <div class="slot" key={`${d.itemId}-${bandKey}`} onClick={() => openDetail({ type: 'item', data: it })}>
+      <ItemHoverTip
+        class={`slot ${rClass}`}
+        key={`${d.itemId}-${bandKey}`}
+        item={it}
+        chance={d.chance}
+        invAssets={data.invAssets}
+        rarityClass={rClass}
+        onClick={() => openDetail({ type: 'item', data: it })}
+      >
         <SpriteIcon kind="item" imageName={it.image} assets={data.invAssets} />
         {d.maxCount && d.maxCount > 1 ? <div class="count-badge">×{d.maxCount}</div> : null}
         <div class={`schance ${chanceClass(d.chance || 0)}`}>{fmtChance(d.chance || 0)}</div>
         <div class="sname">{it.name}</div>
-      </div>
+      </ItemHoverTip>
     );
   };
 
@@ -92,7 +140,26 @@ export function HuntDetailView({ h, data, indexes, openDetail }: Props) {
           </div>
         ))}
       </div>
-      <XPCalculator hunt={h} monsters={mons} />
+      <XPCalculator hunt={h} monsters={mons} items={data.items} itemById={itemById} />
+      {lootEntries.length > 0 && (
+        <>
+          <LootFilter
+            huntId={h.id}
+            entries={lootEntries}
+            excludedIds={excludedIds}
+            onToggle={toggleLoot}
+            onClear={clearFilter}
+            onFilterJunk={filterJunk}
+            itemById={itemById}
+            invAssets={data.invAssets}
+          />
+          <ProfitSummary
+            metrics={metrics}
+            filteredCount={excludedIds.size}
+            totalLootCount={lootEntries.length}
+          />
+        </>
+      )}
       <div class="section-title">
         <span>Loots possíveis</span>
         <span class="line" />
@@ -104,7 +171,7 @@ export function HuntDetailView({ h, data, indexes, openDetail }: Props) {
           if (!rows.length) return null;
           return (
             <div key={band.key}>
-              <div class="loot-group-head">
+              <div class={`loot-group-head loot-${band.key}`}>
                 <span>{band.label}</span>
                 <span>({rows.length})</span>
                 <span class="lgline" />

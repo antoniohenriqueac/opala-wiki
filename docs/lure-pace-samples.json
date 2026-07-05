@@ -1,0 +1,36 @@
+{
+  "description": "Manual calibration samples for lurePace respawn model. Auto-capture via npm run capture:lure-pace when Playwright auth works.",
+  "protocolFields": {
+    "intervalMs": "Respawn interval in milliseconds",
+    "intervalSeconds": "Displayed respawn timer in hunt UI",
+    "minSeconds": "Fastest possible respawn for this hunt",
+    "maxSeconds": "Slowest possible respawn for this hunt",
+    "speed": "Total equipment SPEED stat (server-computed, likely sum of all slots)",
+    "recommendedLevel": "Hunt recommended level",
+    "effectiveLevel": "Character effective level for respawn calc"
+  },
+  "samples": [
+    {
+      "huntId": 68,
+      "huntTitle": "Orc Fortress",
+      "charLevel": 60,
+      "partySize": 4,
+      "lure": 6,
+      "totalItemSpeed": 0,
+      "intervalSeconds": 3.5,
+      "xpPerHourObserved": 217000,
+      "source": "manual-in-game-estimate"
+    }
+  ],
+  "calibration": {
+    "orcFortressBaseIntervalSec": 3.5,
+    "speedCoeffPerPoint": 0.012,
+    "lureParallelFactor": 0.69,
+    "wikiModelXpPerHour": {
+      "level40Party4": 117000,
+      "level60Party4": 218000,
+      "level100Party4": 220000
+    },
+    "notes": "LURE_PARALLEL_FACTOR tunes effective kills per respawn wave. BOH +20 exact delta unknown until lurePace capture succeeds."
+  }
+}

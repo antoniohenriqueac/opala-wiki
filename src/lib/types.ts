@@ -141,6 +141,8 @@ export interface XPCalcSettings {
   partySize: number;
   dmgShare: number;
   lure: number | null;
+  charLevel?: number;
+  totalItemSpeed?: number;
 }
 
 export interface DropSource {

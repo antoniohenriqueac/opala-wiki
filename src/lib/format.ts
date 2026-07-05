@@ -34,6 +34,12 @@ export function rarityOf(chance: number) {
   return RARITY_BANDS[RARITY_BANDS.length - 1];
 }
 
+/** CSS class for loot slot border — matches Stonegy rarity colors. */
+export function lootRarityClass(chance: number): string {
+  const key = rarityOf(chance).key;
+  return `loot-${key}`;
+}
+
 export function fmtChance(c: number): string {
   if (c >= 100) return 'GARANTIDO';
   if (c >= 1) return `${c.toFixed(2)}%`;

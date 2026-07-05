@@ -1,4 +1,5 @@
 import { SpriteIcon } from '../SpriteIcon';
+import { ItemHoverTip } from '../ItemHoverTip';
 import { ResBars } from '../ResBars';
 import {
   fmt,
@@ -6,6 +7,7 @@ import {
   chanceClass,
   RARITY_BANDS,
   rarityOf,
+  lootRarityClass,
   renderStars,
   getQuestIconItemId,
 } from '../../lib/format';
@@ -126,7 +128,7 @@ export function MonsterDetailView({ m, data, indexes, openDetail }: Props) {
           if (!rows.length) return null;
           return (
             <div key={band.key}>
-              <div class="loot-group-head">
+              <div class={`loot-group-head loot-${band.key}`}>
                 <span>{band.label}</span>
                 <span>({rows.length})</span>
                 <span class="lgline" />
@@ -136,9 +138,13 @@ export function MonsterDetailView({ m, data, indexes, openDetail }: Props) {
                   const it = itemById[d.itemId];
                   if (!it) return null;
                   return (
-                    <div
-                      class="slot"
+                    <ItemHoverTip
+                      class={`slot ${lootRarityClass(d.chance || 0)}`}
                       key={d.itemId}
+                      item={it}
+                      chance={d.chance}
+                      invAssets={data.invAssets}
+                      rarityClass={lootRarityClass(d.chance || 0)}
                       onClick={() => openDetail({ type: 'item', data: it })}
                     >
                       <SpriteIcon kind="item" imageName={it.image} assets={data.invAssets} />
@@ -146,7 +152,7 @@ export function MonsterDetailView({ m, data, indexes, openDetail }: Props) {
                         {fmtChance(d.chance || 0)}
                       </div>
                       <div class="sname">{it.name}</div>
-                    </div>
+                    </ItemHoverTip>
                   );
                 })}
               </div>

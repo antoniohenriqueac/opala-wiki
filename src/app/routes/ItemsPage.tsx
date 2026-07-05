@@ -1,22 +1,41 @@
-import { useMemo, useState } from 'preact/hooks';
+import { useMemo, useState, useEffect } from 'preact/hooks';
 import { useWiki } from '../../context/WikiContext';
 import { useDetail } from '../../context/DetailContext';
 import { SearchBar } from '../../components/SearchBar';
 import { SpriteIcon } from '../../components/SpriteIcon';
+import { ItemHoverTip } from '../../components/ItemHoverTip';
 import { ClearFiltersButton, StatsBar } from '../../components/FilterHelpers';
 import { itemCategory, matchQuery } from '../../lib/format';
-import type { Item } from '../../lib/types';
+import {
+  filterItems,
+  loadItemFilters,
+  saveItemFilters,
+  sortItemsByLevel,
+  vocationLabel,
+} from '../../lib/item-filters';
 
 const CAP = 400;
+const LEVEL_PRESETS = [
+  { label: '50–60', min: 50, max: 60 },
+  { label: '80–100', min: 80, max: 100 },
+  { label: '150+', min: 150, max: null as number | null },
+];
 
 export function ItemsPage(_props: { path?: string }) {
   const { data, indexes } = useWiki();
   const { openDetail } = useDetail();
+  const saved = loadItemFilters();
   const [query, setQuery] = useState('');
   const [slot, setSlot] = useState<string | null>(null);
   const [weaponType, setWeaponType] = useState<string | null>(null);
   const [rarity, setRarity] = useState<number | null>(null);
-  const [vocation, setVocation] = useState<string | null>(null);
+  const [vocation, setVocation] = useState<string | null>(saved.vocation ?? null);
+  const [levelMin, setLevelMin] = useState<number | null>(saved.levelMin ?? null);
+  const [levelMax, setLevelMax] = useState<number | null>(saved.levelMax ?? null);
+
+  useEffect(() => {
+    saveItemFilters({ vocation, levelMin, levelMax });
+  }, [vocation, levelMin, levelMax]);
 
   const slots = useMemo(
     () => [...new Set(data.items.map((i) => i.slot).filter(Boolean))].sort() as string[],
@@ -41,17 +60,19 @@ export function ItemsPage(_props: { path?: string }) {
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return data.items
-      .filter((i: Item) => {
-        if (slot && i.slot !== slot) return false;
-        if (weaponType && i.weaponType !== weaponType) return false;
-        if (rarity != null && i.rarityBorderTier !== rarity) return false;
-        if (vocation && !(i.vocation || []).includes(vocation)) return false;
-        if (q && !matchQuery(i.name, q) && !matchQuery(i.id, q)) return false;
-        return true;
-      })
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [data.items, query, slot, weaponType, rarity, vocation]);
+    const filtered = filterItems(data.items, {
+      slot,
+      weaponType,
+      rarity,
+      vocation: q === 'kina' ? 'KNIGHT' : vocation,
+      levelMin,
+      levelMax,
+    }).filter((i) => {
+      if (!q || q === 'kina') return true;
+      return matchQuery(i.name, q) || matchQuery(String(i.id), q);
+    });
+    return sortItemsByLevel(filtered);
+  }, [data.items, query, slot, weaponType, rarity, vocation, levelMin, levelMax]);
 
   const clear = () => {
     setQuery('');
@@ -59,7 +80,14 @@ export function ItemsPage(_props: { path?: string }) {
     setWeaponType(null);
     setRarity(null);
     setVocation(null);
+    setLevelMin(null);
+    setLevelMax(null);
   };
+
+  const levelLabel =
+    levelMin || levelMax
+      ? `lvl ${levelMin ?? '…'}–${levelMax ?? '…'}`
+      : null;
 
   return (
     <>
@@ -71,7 +99,48 @@ export function ItemsPage(_props: { path?: string }) {
         </p>
       </header>
       <div class="filter-panel panel">
-        <SearchBar value={query} onInput={setQuery} placeholder="Buscar item…" />
+        <SearchBar value={query} onInput={setQuery} placeholder="Buscar item… (kina = Knight)" />
+        <div class="field level-range-field">
+          <label>Level req.</label>
+          <div class="level-range-inputs">
+            <input
+              type="number"
+              min={0}
+              placeholder="Mín"
+              value={levelMin ?? ''}
+              onInput={(e) => {
+                const v = (e.target as HTMLInputElement).value;
+                setLevelMin(v === '' ? null : +v);
+              }}
+            />
+            <span>—</span>
+            <input
+              type="number"
+              min={0}
+              placeholder="Máx"
+              value={levelMax ?? ''}
+              onInput={(e) => {
+                const v = (e.target as HTMLInputElement).value;
+                setLevelMax(v === '' ? null : +v);
+              }}
+            />
+          </div>
+          <div class="chip-group">
+            {LEVEL_PRESETS.map((p) => (
+              <button
+                type="button"
+                key={p.label}
+                class={`chip${levelMin === p.min && levelMax === p.max ? ' active' : ''}`}
+                onClick={() => {
+                  setLevelMin(p.min);
+                  setLevelMax(p.max);
+                }}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <div class="field">
           <label>Slot</label>
           <div class="chip-group">
@@ -152,7 +221,7 @@ export function ItemsPage(_props: { path?: string }) {
                   class={`chip${vocation === v ? ' active' : ''}`}
                   onClick={() => setVocation(vocation === v ? null : v)}
                 >
-                  {v}
+                  {vocationLabel(v)}
                 </button>
               ))}
             </div>
@@ -160,7 +229,12 @@ export function ItemsPage(_props: { path?: string }) {
         )}
         <ClearFiltersButton onClear={clear} />
       </div>
-      <StatsBar count={list.length} total={data.items.length} label="itens" capped={CAP} />
+      <StatsBar
+        count={list.length}
+        total={data.items.length}
+        label={`itens · ordem level${vocation ? ` · ${vocationLabel(vocation)}` : ''}${levelLabel ? ` · ${levelLabel}` : ''}`}
+        capped={CAP}
+      />
       {list.length === 0 ? (
         <div class="empty-state">Nenhum item encontrado.</div>
       ) : (
@@ -176,7 +250,13 @@ export function ItemsPage(_props: { path?: string }) {
               .filter(Boolean)
               .join(' · ') || cat;
             return (
-              <div class="card" key={it.id} onClick={() => openDetail({ type: 'item', data: it })}>
+              <ItemHoverTip
+                key={it.id}
+                item={it}
+                class="card"
+                invAssets={data.invAssets}
+                onClick={() => openDetail({ type: 'item', data: it })}
+              >
                 <div class="card-name">{it.name}</div>
                 <div class="card-icon">
                   <SpriteIcon kind="item" imageName={it.image} assets={data.invAssets} />
@@ -185,12 +265,15 @@ export function ItemsPage(_props: { path?: string }) {
                   {it.rarityBorderTier && (
                     <span class={`tag rare-${it.rarityBorderTier}`}>T{it.rarityBorderTier}</span>
                   )}
+                  {it.levelMin != null && (
+                    <span class="tag level-tag">lvl {it.levelMin}+</span>
+                  )}
                   {it.slot && <span class="tag">{it.slot}</span>}
                   {it.weaponType && <span class="tag">{it.weaponType}</span>}
                   {dropCount > 0 && <span class="tag">{dropCount} drops</span>}
                 </div>
                 <div class="card-sub">{meta}</div>
-              </div>
+              </ItemHoverTip>
             );
           })}
         </div>

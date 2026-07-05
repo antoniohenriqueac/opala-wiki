@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
-import type { Hunt, Monster, XPCalcSettings } from '../lib/types';
+import type { Hunt, Monster, XPCalcSettings, Item } from '../lib/types';
 import {
   computeXP,
   loadXPSettings,
@@ -7,14 +7,22 @@ import {
   XP_PRESETS,
 } from '../lib/xp-calculator';
 import { fmt } from '../lib/format';
+import { PartySpeedLoadout } from './PartySpeedLoadout';
+import type { SpeedLoadout } from '../lib/speed-items';
 
 interface XPCalculatorProps {
   hunt: Hunt;
   monsters: Monster[];
+  items: Item[];
+  itemById: Record<number, Item>;
 }
 
-export function XPCalculator({ hunt, monsters }: XPCalculatorProps) {
-  const [settings, setSettings] = useState<XPCalcSettings>(() => loadXPSettings(hunt.id));
+export function XPCalculator({ hunt, monsters, items, itemById }: XPCalculatorProps) {
+  const [settings, setSettings] = useState<XPCalcSettings>(() => ({
+    ...loadXPSettings(hunt.id),
+    charLevel: loadXPSettings(hunt.id).charLevel ?? hunt.recommendedLevel ?? 50,
+    lure: loadXPSettings(hunt.id).lure ?? hunt.maxLure ?? 1,
+  }));
 
   useEffect(() => {
     saveXPSettings(hunt.id, settings);
@@ -33,12 +41,17 @@ export function XPCalculator({ hunt, monsters }: XPCalculatorProps) {
     if (preset) update(preset);
   };
 
+  const onSpeedChange = (totalSpeed: number, _loadout: SpeedLoadout) => {
+    update({ totalItemSpeed: totalSpeed });
+  };
+
   return (
     <div class="xp-calc">
       <div class="xp-calc-head">
         <div class="title">
           Calculadora XP/hora
           <span class="beta-tag">BETA</span>
+          {result.respawnLimited && <span class="tag respawn-cap">respawn cap</span>}
         </div>
         <div class="total">
           <span class="lbl">TOTAL</span>
@@ -46,9 +59,16 @@ export function XPCalculator({ hunt, monsters }: XPCalculatorProps) {
         </div>
       </div>
       <div class="xp-warn">
-        Modelo experimental baseado em DPS, HP e lure. Ajuste os valores para calibrar com sua
-        experiência in-game.
+        Modelo híbrido: max(kill time, respawn). Respawn afetado por level, lure e SPEED de
+        equipamento (estimativa).
       </div>
+      <PartySpeedLoadout
+        items={items}
+        itemById={itemById}
+        settings={settings}
+        hunt={hunt}
+        onSpeedChange={onSpeedChange}
+      />
       <div class="xp-inputs">
         <div class="xp-input">
           <label>Preset</label>
@@ -63,6 +83,15 @@ export function XPCalculator({ hunt, monsters }: XPCalculatorProps) {
           </select>
         </div>
         <div class="xp-input">
+          <label>Level</label>
+          <input
+            type="number"
+            min={1}
+            value={settings.charLevel ?? 50}
+            onInput={(e) => update({ charLevel: +(e.target as HTMLInputElement).value })}
+          />
+        </div>
+        <div class="xp-input">
           <label>DPS</label>
           <input
             type="number"
@@ -72,7 +101,7 @@ export function XPCalculator({ hunt, monsters }: XPCalculatorProps) {
           />
         </div>
         <div class="xp-input">
-          <label>Speed</label>
+          <label>Move speed</label>
           <input
             type="number"
             min={100}
@@ -133,19 +162,27 @@ export function XPCalculator({ hunt, monsters }: XPCalculatorProps) {
           />
         </div>
       </div>
+      <div class="respawn-info muted">
+        Respawn ~{result.respawnInterval.toFixed(1)}s · Party DPS {Math.round(result.totalPartyDps)}
+      </div>
       <table class="xp-table">
         <thead>
           <tr>
             <th>Criatura</th>
             <th>XP/h</th>
+            <th>Ciclo</th>
             <th>Peso</th>
           </tr>
         </thead>
         <tbody>
           {result.rows.map((r) => (
             <tr key={r.id}>
-              <td>{r.name}</td>
+              <td>
+                {r.name}
+                {r.respawnLimited && <span class="tag respawn-cap">R</span>}
+              </td>
               <td>{fmt(Math.round(r.xph_hunt))}</td>
+              <td>{r.cycleTime.toFixed(2)}s</td>
               <td>{r.weight.toFixed(1)}%</td>
             </tr>
           ))}

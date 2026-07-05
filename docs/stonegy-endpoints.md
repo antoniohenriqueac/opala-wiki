@@ -68,3 +68,18 @@ HTTP probe acima é suficiente para o pipeline de extract.
 
 Se auth for necessária no futuro: `STONEGY_EMAIL` / `STONEGY_PASSWORD` no CI.
 Instalar deps WSL: `npx playwright install-deps chromium` (requer sudo).
+
+## lurePace (respawn durante hunt)
+
+Enviado pelo servidor durante hunt ativa (protocolo WebSocket). Client exibe em **Velocidade de Respawn**:
+
+| Campo | Descrição |
+|-------|-----------|
+| `intervalSeconds` | Timer exibido ("Tempo de respawn: 3.5s") |
+| `intervalMs` | Mesmo valor em ms |
+| `minSeconds` / `maxSeconds` | Limites da hunt |
+| `speed` | SPEED total do personagem (equipamento) |
+| `recommendedLevel` | Level recomendado da hunt |
+| `effectiveLevel` | Level efetivo usado no cálculo |
+
+Calibração manual: [`docs/lure-pace-samples.json`](../lure-pace-samples.json). Captura: `npx tsx tools/extract/capture-lure-pace.ts`
