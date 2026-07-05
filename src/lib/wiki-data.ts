@@ -1,3 +1,4 @@
+import { withBase } from './paths';
 import type { WikiData } from './types';
 
 declare global {
@@ -15,7 +16,7 @@ export function getWikiData(): WikiData {
 
 export async function loadManifest(): Promise<{ lastUpdated?: string } | null> {
   try {
-    const res = await fetch('/data/manifest.json');
+    const res = await fetch(withBase('data/manifest.json'));
     if (!res.ok) return null;
     return await res.json();
   } catch {

@@ -49,9 +49,16 @@ Ver [docs/stonegy-endpoints.md](docs/stonegy-endpoints.md).
 - `public/assets/` — sprite atlases webp
 - `tools/extract/` — pipeline automatizado
 
+## Deploy (GitHub Pages)
+
+Site publicado em **[https://antoniohenriqueac.github.io/opala-wiki/](https://antoniohenriqueac.github.io/opala-wiki/)** via GitHub Actions (`.github/workflows/deploy-pages.yml`).
+
+Push na branch `main` dispara build + deploy automaticamente.
+
 ## CI
 
-Workflow `.github/workflows/sync-stonegy-data.yml` roda `npm run extract` diariamente e commita se `manifest.json` mudar. Sem deploy cloud — use `npm run preview` localmente.
+- **Deploy:** `.github/workflows/deploy-pages.yml` — build Vite + GitHub Pages
+- **Dados:** `.github/workflows/sync-stonegy-data.yml` — roda `npm run extract` diariamente e commita se `manifest.json` mudar
 
 ## WSL / Playwright
 

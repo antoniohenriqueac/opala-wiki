@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'preact/hooks';
+import { withBase } from '../lib/paths';
 import type { SpriteAsset } from '../lib/types';
 
 interface SpriteIconProps {
@@ -11,7 +12,7 @@ interface SpriteIconProps {
 
 function sheetUrl(kind: 'item' | 'monster', page: number): string {
   const prefix = kind === 'monster' ? 'monsters' : 'inventory';
-  return `/assets/${prefix}-0${page}.webp`;
+  return withBase(`assets/${prefix}-0${page}.webp`);
 }
 
 export function SpriteIcon({ kind, imageName, animated, size, assets }: SpriteIconProps) {

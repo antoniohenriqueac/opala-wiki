@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { loadManifest } from '../lib/wiki-data';
+import { resolveRoute, withBase } from '../lib/paths';
+import { isModifiedClick, navigate } from '../lib/router';
 
 const NAV = [
   { href: '/hunts', label: 'Hunt Finder', icon: '⚔' },
@@ -37,7 +39,7 @@ export function Layout({ url = '/hunts', children }: LayoutProps) {
       <aside class="sidebar">
         <div class="brand">
           <div class="brand-row">
-            <img class="brand-avatar" src="/opala-avatar.png" alt="Opala" width="40" height="40" />
+            <img class="brand-avatar" src={withBase('opala-avatar.png')} alt="Opala" width="40" height="40" />
             <div class="brand-text">
               <span class="brand-title">Opala Wiki</span>
               <span class="brand-sub">Stonegy Wiki - Nao afiliado</span>
@@ -48,7 +50,12 @@ export function Layout({ url = '/hunts', children }: LayoutProps) {
           {NAV.map((item) => (
             <a
               key={item.href}
-              href={item.href}
+              href={resolveRoute(item.href)}
+              onClick={(event) => {
+                if (isModifiedClick(event)) return;
+                event.preventDefault();
+                navigate(item.href);
+              }}
               class={`nav-link${
                 item.href === '/hunts'
                   ? path === '/' || path.startsWith('/hunts')

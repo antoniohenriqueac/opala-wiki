@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'preact/hooks';
 import Router from 'preact-router';
 import { Layout } from '../components/Layout';
 import { DetailDrawer } from '../components/DetailDrawer';
@@ -5,6 +6,8 @@ import { HuntsPage } from './routes/HuntsPage';
 import { BestiaryPage } from './routes/BestiaryPage';
 import { ItemsPage } from './routes/ItemsPage';
 import { QuestsPage } from './routes/QuestsPage';
+import { appRoute, resolveRoute } from '../lib/paths';
+import { registerNavigate } from '../lib/router';
 
 function HuntsRoute(_props: { url?: string; path?: string }) {
   return (
@@ -38,10 +41,41 @@ function QuestsRoute(_props: { url?: string; path?: string }) {
   );
 }
 
+function currentRouterUrl(): string {
+  return appRoute() + window.location.search;
+}
+
 export function App() {
+  const [url, setUrl] = useState(currentRouterUrl);
+
+  useEffect(() => {
+    registerNavigate((route) => {
+      const [path, query = ''] = route.split('?');
+      const browserUrl = resolveRoute(path) + (query ? `?${query}` : '');
+      window.history.pushState(null, '', browserUrl);
+      setUrl(route.startsWith('/') ? route : `/${route}`);
+    });
+
+    const onPopState = () => setUrl(currentRouterUrl());
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  const onRouteChange = (event: { url?: string }) => {
+    const next = event.url ?? '/';
+    const [path, query = ''] = next.split('?');
+    const browserUrl = resolveRoute(path) + (query ? `?${query}` : '');
+
+    if (window.location.pathname + window.location.search !== browserUrl) {
+      window.history.pushState(null, '', browserUrl);
+    }
+
+    setUrl(next);
+  };
+
   return (
     <>
-      <Router>
+      <Router url={url} onChange={onRouteChange}>
         <HuntsRoute path="/hunts" />
         <HuntsRoute path="/" />
         <BestiaryRoute path="/bestiary" />
