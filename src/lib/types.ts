@@ -66,6 +66,10 @@ export interface Hunt {
   levelMax?: number;
   maxLure?: number;
   minLure?: number;
+  /** From lurePace.minSeconds when captured — fastest respawn at max lure */
+  minRespawnSec?: number;
+  /** From lurePace.maxSeconds when captured — slowest respawn at min lure */
+  maxRespawnSec?: number;
   monsterWeights?: Record<string, number>;
   isPremmium?: boolean;
   tutorialOnly?: boolean;

@@ -1,7 +1,10 @@
 import type { Hunt, Monster, XPCalcSettings } from './types';
 
-/** Seconds reduced per point of equipment SPEED (calibrated estimate). */
-export const SPEED_COEFF = 0.012;
+/** Each 20 equipment SPEED reduces respawn by 1 second (in-game rule). */
+export const SPEED_POINTS_PER_SEC = 20;
+
+/** @deprecated use SPEED_POINTS_PER_SEC — kept for grep compatibility */
+export const SPEED_COEFF = 1 / SPEED_POINTS_PER_SEC;
 
 /** Orc Fortress baseline at max lure — see docs/lure-pace-samples.json */
 export const DEFAULT_BASE_INTERVAL_SEC = 3.5;
@@ -16,8 +19,10 @@ export function estimateRespawnInterval(hunt: Hunt, settings: XPCalcSettings): n
 
   const lureSpan = maxLure - minLure || 1;
   const lureT = (lure - minLure) / lureSpan;
-  const baseSlow = 5.0;
-  const baseFast = DEFAULT_BASE_INTERVAL_SEC;
+  const huntMin = hunt.minRespawnSec;
+  const huntMax = hunt.maxRespawnSec;
+  const baseSlow = huntMax ?? 5.0;
+  const baseFast = huntMin ?? DEFAULT_BASE_INTERVAL_SEC;
   let interval = baseSlow - lureT * (baseSlow - baseFast);
 
   const recLevel = Math.max(1, hunt.recommendedLevel ?? hunt.levelMin ?? 1);
@@ -32,11 +37,16 @@ export function estimateRespawnInterval(hunt: Hunt, settings: XPCalcSettings): n
   }
 
   const totalSpeed = Math.max(0, settings.totalItemSpeed ?? 0);
-  interval /= 1 + totalSpeed * SPEED_COEFF;
+  interval -= totalSpeed / SPEED_POINTS_PER_SEC;
 
-  const minSec = Math.max(1.5, (minLure / maxLure) * baseFast);
-  const maxSec = baseSlow * 1.1;
-  return Math.max(minSec, Math.min(maxSec, interval));
+  const maxSec = (huntMax ?? baseSlow) * 1.1;
+  const absoluteMin = huntMin ?? 1.5;
+  return Math.max(absoluteMin, Math.min(maxSec, interval));
+}
+
+/** Seconds removed from respawn for a given SPEED total. */
+export function speedRespawnReductionSec(totalSpeed: number): number {
+  return Math.max(0, totalSpeed) / SPEED_POINTS_PER_SEC;
 }
 
 export function cycleTimeSeconds(

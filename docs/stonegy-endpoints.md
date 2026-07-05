@@ -82,4 +82,8 @@ Enviado pelo servidor durante hunt ativa (protocolo WebSocket). Client exibe em 
 | `recommendedLevel` | Level recomendado da hunt |
 | `effectiveLevel` | Level efetivo usado no cálculo |
 
+**Regra SPEED (confirmada in-game):** cada **20 pontos de SPEED** reduzem o respawn em **1 segundo** (`interval -= totalSpeed / 20`).
+
+**Importante:** respawn é **por hunt** (timer único do `lurePace`), não por criatura individual. Todos os mobs na mesma hunt compartilham o ciclo de respawn; o wiki usa pesos de spawn (`monsterWeights`) para distribuir XP/loot.
+
 Calibração manual: [`docs/lure-pace-samples.json`](../lure-pace-samples.json). Captura: `npx tsx tools/extract/capture-lure-pace.ts`

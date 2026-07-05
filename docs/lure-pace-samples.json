@@ -24,13 +24,14 @@
   ],
   "calibration": {
     "orcFortressBaseIntervalSec": 3.5,
-    "speedCoeffPerPoint": 0.012,
+    "speedPointsPerSec": 20,
+    "speedRule": "interval -= totalItemSpeed / 20 (each 20 SPEED = -1s respawn)",
     "lureParallelFactor": 0.69,
     "wikiModelXpPerHour": {
       "level40Party4": 117000,
       "level60Party4": 218000,
       "level100Party4": 220000
     },
-    "notes": "LURE_PARALLEL_FACTOR tunes effective kills per respawn wave. BOH +20 exact delta unknown until lurePace capture succeeds."
+    "notes": "Respawn is per-hunt (lurePace), not per-monster. SPEED: 20 points = 1s faster. LURE_PARALLEL_FACTOR tunes kills per respawn wave."
   }
 }

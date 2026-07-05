@@ -12,7 +12,7 @@ import {
   itemSpeedValue,
 } from '../lib/speed-items';
 import { filterItems } from '../lib/item-filters';
-import { estimateRespawnInterval, SPEED_COEFF } from '../lib/respawn-model';
+import { estimateRespawnInterval, speedRespawnReductionSec, SPEED_POINTS_PER_SEC } from '../lib/respawn-model';
 
 interface PartySpeedLoadoutProps {
   items: Item[];
@@ -129,14 +129,13 @@ export function PartySpeedLoadout({
         {totalSpeed > 0 && (
           <span class="muted">
             {' '}
-            (sem speed: {baseInterval.toFixed(1)}s · ~{(SPEED_COEFF * totalSpeed * 100).toFixed(0)}%
-            mais rápido)
+            (sem speed: {baseInterval.toFixed(1)}s · −{speedRespawnReductionSec(totalSpeed).toFixed(1)}s)
           </span>
         )}
       </div>
       <div class="xp-warn speed-note">
-        Impacto de SPEED é estimativa (~{SPEED_COEFF}/pt). BOH +20 ≈{' '}
-        {((1 - 1 / (1 + 20 * SPEED_COEFF)) * 100).toFixed(0)}% respawn mais rápido (aprox.).
+        Regra in-game: {SPEED_POINTS_PER_SEC} SPEED = −1s no respawn. BOH +20 ≈ −1.0s. Mesmo ciclo
+        afeta XP/h e GP/h.
       </div>
     </div>
   );

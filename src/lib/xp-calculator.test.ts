@@ -52,12 +52,13 @@ describe('xp-calculator respawn model', () => {
     assert.ok(r.totalXpPerHour <= 170_000);
   });
 
-  it('BOH speed reduces respawn interval', () => {
+  it('BOH +20 speed reduces respawn by 1 second', () => {
     const base = settingsFor(60);
     const withBoh = { ...base, totalItemSpeed: 20 };
     const rBase = computeXP(orcMonsters, orcFortress, base);
     const rBoh = computeXP(orcMonsters, orcFortress, withBoh);
-    assert.ok(rBoh.respawnInterval < rBase.respawnInterval);
+    const delta = rBase.respawnInterval - rBoh.respawnInterval;
+    assert.ok(delta >= 0.95 && delta <= 1.05, `expected ~1s reduction, got ${delta}`);
     assert.ok(rBoh.totalXpPerHour >= rBase.totalXpPerHour);
   });
 
@@ -83,5 +84,24 @@ describe('hunt-metrics loot filter', () => {
     });
     assert.ok(filtered.profitPerHour < full.profitPerHour);
     assert.equal(filtered.profitPerHourBase, full.profitPerHour);
+  });
+
+  it('SPEED increases profitPerHour via shorter respawn cycle', () => {
+    const s = settingsFor(60);
+    const itemById = {
+      999: { id: 999, name: 'Gold Ring', image: 'x', npcSellPrice: 8000 },
+    };
+    const monWithLoot: Monster[] = [
+      { ...orcMonsters[0], loot: [{ itemId: 999, chance: 10, maxCount: 1 }] },
+      orcMonsters[1],
+      orcMonsters[2],
+    ];
+    const base = computeHuntMetrics(orcFortress, monWithLoot, itemById, s);
+    const withBoh = computeHuntMetrics(orcFortress, monWithLoot, itemById, {
+      ...s,
+      totalItemSpeed: 20,
+    });
+    assert.ok(withBoh.profitPerHour > base.profitPerHour);
+    assert.ok(base.respawnInterval - withBoh.respawnInterval >= 0.95);
   });
 });

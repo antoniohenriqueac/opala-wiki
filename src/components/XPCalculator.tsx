@@ -59,8 +59,8 @@ export function XPCalculator({ hunt, monsters, items, itemById }: XPCalculatorPr
         </div>
       </div>
       <div class="xp-warn">
-        Modelo híbrido: max(kill time, respawn). Respawn afetado por level, lure e SPEED de
-        equipamento (estimativa).
+        Modelo híbrido: max(kill time, respawn). Respawn por hunt (não por mob). 20 SPEED = −1s.
+        Mesmo ciclo vale para XP/h e GP/h.
       </div>
       <PartySpeedLoadout
         items={items}
