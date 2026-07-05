@@ -6,7 +6,7 @@ import { HuntsPage } from './routes/HuntsPage';
 import { BestiaryPage } from './routes/BestiaryPage';
 import { ItemsPage } from './routes/ItemsPage';
 import { QuestsPage } from './routes/QuestsPage';
-import { appRoute, resolveRoute } from '../lib/paths';
+import { appRoute, resolveRoute, toAppPath } from '../lib/paths';
 import { registerNavigate } from '../lib/router';
 
 function HuntsRoute(_props: { url?: string; path?: string }) {
@@ -50,10 +50,10 @@ export function App() {
 
   useEffect(() => {
     registerNavigate((route) => {
-      const [path, query = ''] = route.split('?');
-      const browserUrl = resolveRoute(path) + (query ? `?${query}` : '');
+      const appPath = toAppPath(route);
+      const browserUrl = resolveRoute(appPath);
       window.history.pushState(null, '', browserUrl);
-      setUrl(route.startsWith('/') ? route : `/${route}`);
+      setUrl(appPath);
     });
 
     const onPopState = () => setUrl(currentRouterUrl());
@@ -62,9 +62,8 @@ export function App() {
   }, []);
 
   const onRouteChange = (event: { url?: string }) => {
-    const next = event.url ?? '/';
-    const [path, query = ''] = next.split('?');
-    const browserUrl = resolveRoute(path) + (query ? `?${query}` : '');
+    const next = toAppPath(event.url ?? '/');
+    const browserUrl = resolveRoute(next);
 
     if (window.location.pathname + window.location.search !== browserUrl) {
       window.history.pushState(null, '', browserUrl);

@@ -9,18 +9,31 @@ export function withBase(path: string): string {
   return `${baseUrl}${normalized}`;
 }
 
+/** Strip GitHub Pages base and return app route, e.g. `/opala-wiki/quests` → `/quests`. */
+export function toAppPath(route: string): string {
+  const [pathname, ...rest] = route.split('?');
+  const query = rest.length ? `?${rest.join('?')}` : '';
+  let path = pathname.startsWith('/') ? pathname : `/${pathname}`;
+
+  if (BASE_PATH && path.startsWith(BASE_PATH)) {
+    path = path.slice(BASE_PATH.length) || '/';
+  }
+
+  return path + query;
+}
+
 /** App route for preact-router (strips GitHub Pages base). */
 export function appRoute(pathname = window.location.pathname): string {
-  if (BASE_PATH && pathname.startsWith(BASE_PATH)) {
-    const rest = pathname.slice(BASE_PATH.length);
-    return rest || '/';
-  }
-  return pathname || '/';
+  return toAppPath(pathname).split('?')[0] || '/';
 }
 
 /** Full browser URL for an app route, e.g. `/hunts` → `/opala-wiki/hunts`. */
 export function resolveRoute(route: string): string {
-  const routePath = route.startsWith('/') ? route : `/${route}`;
-  if (!BASE_PATH) return routePath;
-  return `${BASE_PATH}${routePath}`;
+  const appPath = toAppPath(route);
+  const [path, query = ''] = appPath.split('?');
+  const routePath = path.startsWith('/') ? path : `/${path}`;
+
+  if (!BASE_PATH) return appPath;
+
+  return `${BASE_PATH}${routePath}${query ? `?${query}` : ''}`;
 }
