@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'preact/hooks';
 import type { Item, Hunt, XPCalcSettings } from '../lib/types';
 import {
   SPEED_SLOTS,
+  SPEED_SLOT_LABELS,
   type SpeedLoadout,
   type SpeedSlot,
   loadSpeedLoadout,
@@ -11,7 +12,6 @@ import {
   SPEED_PRESETS,
   itemSpeedValue,
 } from '../lib/speed-items';
-import { filterItems } from '../lib/item-filters';
 import { estimateRespawnInterval, speedRespawnReductionSec, SPEED_POINTS_PER_SEC } from '../lib/respawn-model';
 
 interface PartySpeedLoadoutProps {
@@ -22,13 +22,7 @@ interface PartySpeedLoadoutProps {
   onSpeedChange: (totalSpeed: number, loadout: SpeedLoadout) => void;
 }
 
-const SLOT_LABELS: Record<SpeedSlot, string> = {
-  FOOT: 'Botas',
-  LEGS: 'Pernas',
-  BODY: 'Armadura',
-  HEAD: 'Capacete',
-  NECK: 'Colar/Anel',
-};
+const SLOT_LABELS = SPEED_SLOT_LABELS;
 
 export function PartySpeedLoadout({
   items,
@@ -42,12 +36,18 @@ export function PartySpeedLoadout({
 
   const charLevel = settings.charLevel ?? 50;
 
-  const eligibleItems = useMemo(
-    () => filterItems(items.filter((i) => itemSpeedValue(i) > 0), { levelMax: charLevel + 20 }),
-    [items, charLevel],
-  );
+  const speedCatalog = useMemo(() => {
+    const byId = new Map<number, Item>();
+    for (const it of items) {
+      if (itemSpeedValue(it) > 0) byId.set(it.id, it);
+    }
+    for (const it of Object.values(itemById)) {
+      if (itemSpeedValue(it) > 0) byId.set(it.id, it);
+    }
+    return [...byId.values()];
+  }, [items, itemById]);
 
-  const bySlot = useMemo(() => speedItemsBySlot(eligibleItems), [eligibleItems]);
+  const bySlot = useMemo(() => speedItemsBySlot(speedCatalog), [speedCatalog]);
 
   const computedSpeed = sumEquippedSpeed(loadout, itemById);
   const totalSpeed = manualSpeed ?? computedSpeed;
@@ -102,12 +102,16 @@ export function PartySpeedLoadout({
             }}
           >
             <option value="">— nenhum —</option>
-            {bySlot[slot].map((it) => (
-              <option key={it.id} value={it.id}>
-                {it.name} (+{itemSpeedValue(it)})
-                {it.levelMin ? ` · lvl ${it.levelMin}` : ''}
-              </option>
-            ))}
+            {bySlot[slot].map((it) => {
+              const overLevel = it.levelMin != null && it.levelMin > charLevel;
+              return (
+                <option key={it.id} value={it.id}>
+                  {it.name} (+{itemSpeedValue(it)})
+                  {it.levelMin != null ? ` · lvl ${it.levelMin}` : ''}
+                  {overLevel ? ' ⚠' : ''}
+                </option>
+              );
+            })}
           </select>
         </div>
       ))}
@@ -132,6 +136,10 @@ export function PartySpeedLoadout({
             (sem speed: {baseInterval.toFixed(1)}s · −{speedRespawnReductionSec(totalSpeed).toFixed(1)}s)
           </span>
         )}
+      </div>
+      <div class="speed-catalog-note muted">
+        {speedCatalog.length} itens SPEED no wiki · {SPEED_SLOTS.filter((s) => bySlot[s].length).length}{' '}
+        slots com opções
       </div>
       <div class="xp-warn speed-note">
         Regra in-game: {SPEED_POINTS_PER_SEC} SPEED = −1s no respawn. BOH +20 ≈ −1.0s. Mesmo ciclo

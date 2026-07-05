@@ -679,6 +679,75 @@ body::-webkit-scrollbar-button,
 .xp-calc-head .title { font-weight: 700; font-size: 0.9rem; }
 .xp-calc-head .total { text-align: right; font-size: 1.25rem; font-weight: 700; color: var(--gold); }
 .xp-calc-head .total .lbl { font-size: 0.65rem; color: var(--text-dim); display: block; font-weight: 400; }
+.xp-calc-head.compact { margin-bottom: 0.35rem; }
+
+/* Sticky XP + profit bar in hunt detail modal */
+.hunt-sticky-metrics {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1.25rem;
+  margin: 0.75rem 0 1rem;
+  padding: 0.65rem 0.85rem;
+  background: rgba(14, 12, 10, 0.94);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.hunt-sticky-block {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.hunt-sticky-lbl {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+
+.hunt-sticky-val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.hunt-sticky-val.xp { color: var(--gold); }
+.hunt-sticky-val.profit { color: var(--profit); }
+
+.hunt-sticky-profit {
+  display: flex;
+  gap: 1rem 1.25rem;
+  margin-left: auto;
+}
+
+.hunt-sticky-profit-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
+}
+
+.hunt-sticky-meta {
+  width: 100%;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  padding-top: 0.15rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 520px) {
+  .hunt-sticky-profit { margin-left: 0; width: 100%; justify-content: space-between; }
+  .hunt-sticky-profit-col { align-items: flex-start; }
+}
 
 .beta-tag {
   font-size: 0.6rem;
@@ -1336,6 +1405,7 @@ body::-webkit-scrollbar-button,
 }
 .speed-override { margin-top: 0.5rem; }
 .speed-respawn-est { font-size: 0.78rem; margin-top: 0.65rem; color: var(--text-muted); }
+.speed-catalog-note { font-size: 0.68rem; margin-top: 0.35rem; color: var(--text-dim); }
 .speed-note { margin-top: 0.5rem; font-size: 0.68rem; }
 
 .tag.respawn-cap {

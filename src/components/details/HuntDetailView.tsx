@@ -1,8 +1,8 @@
-import { useMemo, useState, useEffect } from 'preact/hooks';
+import { useMemo, useState, useEffect, useCallback } from 'preact/hooks';
 import { SpriteIcon } from '../SpriteIcon';
 import { XPCalculator } from '../XPCalculator';
 import { LootFilter } from '../LootFilter';
-import { ProfitSummary } from '../ProfitSummary';
+import { HuntMetricsSticky } from '../HuntMetricsSticky';
 import { ItemHoverTip } from '../ItemHoverTip';
 import {
   fmt,
@@ -16,14 +16,14 @@ import {
   huntMonsters,
   collectHuntLoot,
   computeHuntMetrics,
-  buildCalcSettings,
 } from '../../lib/hunt-metrics';
 import {
   loadExcludedLootIds,
   saveExcludedLootIds,
   junkItemIds,
 } from '../../lib/loot-filter';
-import type { Hunt, LootEntry, WikiData } from '../../lib/types';
+import { computeXP, loadXPSettings, saveXPSettings } from '../../lib/xp-calculator';
+import type { Hunt, LootEntry, WikiData, XPCalcSettings } from '../../lib/types';
 import type { WikiIndexes } from '../../lib/indexes';
 import type { DetailTarget } from '../../context/DetailContext';
 
@@ -41,18 +41,36 @@ export function HuntDetailView({ h, data, indexes, openDetail }: Props) {
 
   const [excludedIds, setExcludedIds] = useState<Set<number>>(() => loadExcludedLootIds(h.id));
 
+  const [xpSettings, setXpSettings] = useState<XPCalcSettings>(() => {
+    const saved = loadXPSettings(h.id);
+    return {
+      ...saved,
+      charLevel: saved.charLevel ?? h.recommendedLevel ?? 50,
+      lure: saved.lure ?? h.maxLure ?? 1,
+    };
+  });
+
+  const updateSettings = useCallback(
+    (patch: Partial<XPCalcSettings>) => setXpSettings((s) => ({ ...s, ...patch })),
+    [],
+  );
+
   useEffect(() => {
     saveExcludedLootIds(h.id, excludedIds);
   }, [h.id, excludedIds]);
 
-  const settings = useMemo(
-    () => buildCalcSettings(1, h.recommendedLevel ?? 50, 'ALL', h),
-    [h],
-  );
+  useEffect(() => {
+    saveXPSettings(h.id, xpSettings);
+  }, [h.id, xpSettings]);
 
   const metrics = useMemo(
-    () => computeHuntMetrics(h, mons, itemById, settings, { excludedLootIds: excludedIds }),
-    [h, mons, itemById, settings, excludedIds],
+    () => computeHuntMetrics(h, mons, itemById, xpSettings, { excludedLootIds: excludedIds }),
+    [h, mons, itemById, xpSettings, excludedIds],
+  );
+
+  const xpPerHour = useMemo(
+    () => Math.round(computeXP(mons, h, xpSettings).totalXpPerHour),
+    [mons, h, xpSettings],
   );
 
   const toggleLoot = (itemId: number) => {
@@ -125,6 +143,15 @@ export function HuntDetailView({ h, data, indexes, openDetail }: Props) {
           </div>
         )}
       </div>
+
+      <HuntMetricsSticky
+        xpPerHour={xpPerHour}
+        metrics={metrics}
+        filteredCount={excludedIds.size}
+        totalLootCount={lootEntries.length}
+        showProfit={lootEntries.length > 0}
+      />
+
       <div class="section-title">
         <span>Criaturas ({mons.length})</span>
         <span class="line" />
@@ -140,26 +167,30 @@ export function HuntDetailView({ h, data, indexes, openDetail }: Props) {
           </div>
         ))}
       </div>
-      <XPCalculator hunt={h} monsters={mons} items={data.items} itemById={itemById} />
+
+      <XPCalculator
+        hunt={h}
+        monsters={mons}
+        items={data.items}
+        itemById={itemById}
+        settings={xpSettings}
+        onSettingsChange={updateSettings}
+        compactHead
+      />
+
       {lootEntries.length > 0 && (
-        <>
-          <LootFilter
-            huntId={h.id}
-            entries={lootEntries}
-            excludedIds={excludedIds}
-            onToggle={toggleLoot}
-            onClear={clearFilter}
-            onFilterJunk={filterJunk}
-            itemById={itemById}
-            invAssets={data.invAssets}
-          />
-          <ProfitSummary
-            metrics={metrics}
-            filteredCount={excludedIds.size}
-            totalLootCount={lootEntries.length}
-          />
-        </>
+        <LootFilter
+          huntId={h.id}
+          entries={lootEntries}
+          excludedIds={excludedIds}
+          onToggle={toggleLoot}
+          onClear={clearFilter}
+          onFilterJunk={filterJunk}
+          itemById={itemById}
+          invAssets={data.invAssets}
+        />
       )}
+
       <div class="section-title">
         <span>Loots possíveis</span>
         <span class="line" />
