@@ -57,7 +57,6 @@ export function Layout({ url = '/hunts', children }: LayoutProps) {
               onClick={(event) => {
                 if (isModifiedClick(event)) return;
                 event.preventDefault();
-                event.stopPropagation();
                 navigate(item.href);
               }}
               class={`nav-link${
