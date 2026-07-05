@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { loadManifest } from '../lib/wiki-data';
 import { resolveRoute, withBase } from '../lib/paths';
-import { isModifiedClick, navigate } from '../lib/router';
+import { isModifiedClick, useRouter } from '../context/RouterContext';
 
 const DONATE_PIX_URL =
   'https://nubank.com.br/cobrar/5hux2/6a4aa55b-32b6-44ca-a71f-85d7fc5ef765';
@@ -20,6 +20,7 @@ interface LayoutProps {
 }
 
 export function Layout({ url = '/hunts', children }: LayoutProps) {
+  const { navigate } = useRouter();
   const path = url.split('?')[0] || '/hunts';
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
