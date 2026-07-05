@@ -47,41 +47,25 @@ function getWeight(hunt: Hunt, monsterId: number): number {
   return w[String(monsterId)] ?? w[monsterId as unknown as string] ?? 10;
 }
 
-const VOCATION_DPS: Record<Vocation, number> = {
-  ALL: 1,
-  SORCERER: 1.1,
-  DRUID: 1.05,
-  PALADIN: 0.95,
-  KNIGHT: 0.75,
-};
-
-export function buildCalcSettings(
-  partySize: PartySize,
-  charLevel: number,
-  vocation: Vocation = 'ALL',
-  hunt?: Hunt,
-  totalItemSpeed = 0,
-): XPCalcSettings {
-  const baseDps = Math.max(20, Math.round(charLevel * 1.2 * (VOCATION_DPS[vocation] || 1)));
-  return {
-    ...XP_DEFAULTS,
-    dps: baseDps,
-    charLevel,
-    totalItemSpeed,
-    speed: 220 + Math.min(80, Math.floor(charLevel / 5)),
-    partySize,
-    dmgShare: partyDmgShare(partySize),
-    lure: hunt?.maxLure ?? null,
-  };
+interface HuntProfitContext {
+  hunt: Hunt;
+  monsters: Monster[];
+  settings: XPCalcSettings;
+  totalWeight: number;
+  totalPartyDps: number;
+  sharedCycle: number | null;
+  respawnInterval: number;
+  lure: number;
+  speedMul: number;
+  lureMul: number;
+  boost: number;
 }
 
-function profitForMonsters(
+function buildHuntProfitContext(
   hunt: Hunt,
   monsters: Monster[],
-  itemById: Record<number, Item>,
   settings: XPCalcSettings,
-  excludedItemIds?: Set<number>,
-): number {
+): HuntProfitContext {
   const charLevel = settings.charLevel ?? hunt.recommendedLevel ?? 50;
   const recLevel = hunt.recommendedLevel ?? hunt.levelMin ?? 50;
   const rawDps = Math.max(1, settings.dps);
@@ -120,15 +104,107 @@ function profitForMonsters(
   for (const m of monsters) totalWeight += getWeight(hunt, m.id);
   if (!totalWeight) totalWeight = monsters.length || 1;
 
+  return {
+    hunt,
+    monsters,
+    settings,
+    totalWeight,
+    totalPartyDps,
+    sharedCycle,
+    respawnInterval,
+    lure,
+    speedMul,
+    lureMul,
+    boost,
+  };
+}
+
+/** Expected NPC gp/h from one loot item across all hunt monsters (current calc settings). */
+export function computeLootItemProfitPerHour(
+  hunt: Hunt,
+  monsters: Monster[],
+  itemId: number,
+  itemById: Record<number, Item>,
+  settings: XPCalcSettings,
+): number {
+  const it = itemById[itemId];
+  const price = it?.npcSellPrice ?? 0;
+  if (!price) return 0;
+
+  const ctx = buildHuntProfitContext(hunt, monsters, settings);
   let profitPerHour = 0;
-  for (const m of monsters) {
-    const w = getWeight(hunt, m.id);
-    const share = w / totalWeight;
-    const { cycleTime: perMonsterCycle } = cycleTimeSeconds(m.hp, totalPartyDps, respawnInterval, lure);
-    const cycleTime = sharedCycle ?? perMonsterCycle;
+
+  for (const m of ctx.monsters) {
+    const drop = (m.loot || []).find((d) => d.itemId === itemId);
+    if (!drop) continue;
+    const w = getWeight(ctx.hunt, m.id);
+    const share = w / ctx.totalWeight;
+    const { cycleTime: perMonsterCycle } = cycleTimeSeconds(
+      m.hp,
+      ctx.totalPartyDps,
+      ctx.respawnInterval,
+      ctx.lure,
+    );
+    const cycleTime = ctx.sharedCycle ?? perMonsterCycle;
+    const kills_h = 3600 / cycleTime;
+    const expectedGp =
+      price * ((drop.chance || 0) / 100) * (drop.maxCount || 1);
+    profitPerHour += kills_h * expectedGp * share * ctx.lureMul * ctx.speedMul * ctx.boost;
+  }
+
+  return profitPerHour;
+}
+
+const VOCATION_DPS: Record<Vocation, number> = {
+  ALL: 1,
+  SORCERER: 1.1,
+  DRUID: 1.05,
+  PALADIN: 0.95,
+  KNIGHT: 0.75,
+};
+
+export function buildCalcSettings(
+  partySize: PartySize,
+  charLevel: number,
+  vocation: Vocation = 'ALL',
+  hunt?: Hunt,
+  totalItemSpeed = 0,
+): XPCalcSettings {
+  const baseDps = Math.max(20, Math.round(charLevel * 1.2 * (VOCATION_DPS[vocation] || 1)));
+  return {
+    ...XP_DEFAULTS,
+    dps: baseDps,
+    charLevel,
+    totalItemSpeed,
+    speed: 220 + Math.min(80, Math.floor(charLevel / 5)),
+    partySize,
+    dmgShare: partyDmgShare(partySize),
+    lure: hunt?.maxLure ?? null,
+  };
+}
+
+function profitForMonsters(
+  hunt: Hunt,
+  monsters: Monster[],
+  itemById: Record<number, Item>,
+  settings: XPCalcSettings,
+  excludedItemIds?: Set<number>,
+): number {
+  const ctx = buildHuntProfitContext(hunt, monsters, settings);
+  let profitPerHour = 0;
+  for (const m of ctx.monsters) {
+    const w = getWeight(ctx.hunt, m.id);
+    const share = w / ctx.totalWeight;
+    const { cycleTime: perMonsterCycle } = cycleTimeSeconds(
+      m.hp,
+      ctx.totalPartyDps,
+      ctx.respawnInterval,
+      ctx.lure,
+    );
+    const cycleTime = ctx.sharedCycle ?? perMonsterCycle;
     const kills_h = 3600 / cycleTime;
     const goldPerKill = avgGold(m) + avgLootValuePerKill(m, itemById, excludedItemIds);
-    profitPerHour += kills_h * goldPerKill * share * lureMul * speedMul * boost;
+    profitPerHour += kills_h * goldPerKill * share * ctx.lureMul * ctx.speedMul * ctx.boost;
   }
   return profitPerHour;
 }

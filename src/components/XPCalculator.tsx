@@ -54,7 +54,7 @@ export function XPCalculator({
       </div>
       <div class="xp-warn">
         Modelo híbrido: max(kill time, respawn). Respawn por hunt (não por mob). 20 SPEED = −1s.
-        Mesmo ciclo vale para XP/h e GP/h.
+        Mesmo ciclo vale para XP/h e gp/h.
       </div>
       <PartySpeedLoadout
         items={items}

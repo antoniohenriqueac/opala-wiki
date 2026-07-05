@@ -18,7 +18,7 @@ interface HuntFiltersProps {
 
 const SORTS: { id: HuntSort; label: string }[] = [
   { id: 'xp', label: 'Melhor XP' },
-  { id: 'profit', label: 'Melhor Gold/h' },
+  { id: 'profit', label: 'Melhor gp/h' },
   { id: 'level', label: 'Level' },
   { id: 'name', label: 'Nome' },
 ];
@@ -97,7 +97,7 @@ export function HuntFilters({ state, onChange }: HuntFiltersProps) {
         />
       </div>
       <div class="field">
-        <label>Lucro/h mín (gp)</label>
+        <label>gp/h mín</label>
         <input
           type="number"
           min={0}

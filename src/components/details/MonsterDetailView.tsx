@@ -82,9 +82,9 @@ export function MonsterDetailView({ m, data, indexes, openDetail }: Props) {
           <div class="val">{fmt(m.xp)}</div>
         </div>
         <div class="best-stat">
-          <div class="lbl">Gold</div>
+          <div class="lbl">gold</div>
           <div class="val">
-            {m.goldCoins ? `${fmt(m.goldCoins.min)}–${fmt(m.goldCoins.max)}` : '—'}
+            {m.goldCoins ? `${fmt(m.goldCoins.min)}–${fmt(m.goldCoins.max)} gp` : '—'}
           </div>
         </div>
         <div class="best-stat">

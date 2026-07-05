@@ -16,6 +16,7 @@ import {
   huntMonsters,
   collectHuntLoot,
   computeHuntMetrics,
+  computeLootItemProfitPerHour,
 } from '../../lib/hunt-metrics';
 import {
   loadExcludedLootIds,
@@ -73,6 +74,20 @@ export function HuntDetailView({ h, data, indexes, openDetail }: Props) {
     [mons, h, xpSettings],
   );
 
+  const lootGpPerHour = useMemo(() => {
+    const map: Record<number, number> = {};
+    for (const entry of lootEntries) {
+      map[entry.itemId] = computeLootItemProfitPerHour(
+        h,
+        mons,
+        entry.itemId,
+        itemById,
+        xpSettings,
+      );
+    }
+    return map;
+  }, [h, mons, lootEntries, itemById, xpSettings]);
+
   const toggleLoot = (itemId: number) => {
     setExcludedIds((prev) => {
       const next = new Set(prev);
@@ -108,6 +123,7 @@ export function HuntDetailView({ h, data, indexes, openDetail }: Props) {
         item={it}
         chance={d.chance}
         invAssets={data.invAssets}
+        gpPerHour={lootGpPerHour[d.itemId]}
         rarityClass={rClass}
         onClick={() => openDetail({ type: 'item', data: it })}
       >
@@ -188,6 +204,7 @@ export function HuntDetailView({ h, data, indexes, openDetail }: Props) {
           onFilterJunk={filterJunk}
           itemById={itemById}
           invAssets={data.invAssets}
+          lootGpPerHour={lootGpPerHour}
         />
       )}
 

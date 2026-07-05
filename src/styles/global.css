@@ -1360,6 +1360,7 @@ body::-webkit-scrollbar-button,
 }
 
 .item-hover-gp { color: var(--profit); font-weight: 600; }
+.item-hover-gph { font-weight: 600; opacity: 0.95; }
 .item-hover-drop { color: var(--text-dim); margin-left: auto; }
 
 .tag.level-tag { color: var(--gold); border-color: rgba(232, 200, 114, 0.35); }

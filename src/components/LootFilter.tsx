@@ -18,6 +18,7 @@ interface LootFilterProps {
   onFilterJunk: () => void;
   itemById: Record<number, Item>;
   invAssets: Record<string, SpriteAsset>;
+  lootGpPerHour?: Record<number, number>;
 }
 
 export function LootFilter({
@@ -28,6 +29,7 @@ export function LootFilter({
   onFilterJunk,
   itemById,
   invAssets,
+  lootGpPerHour,
 }: LootFilterProps) {
   const active = entries.length - excludedIds.size;
 
@@ -62,6 +64,7 @@ export function LootFilter({
               item={it}
               class={`loot-filter-slot ${rClass}${excluded ? ' excluded' : ''}`}
               chance={d.chance}
+              gpPerHour={lootGpPerHour?.[d.itemId]}
               invAssets={invAssets}
               rarityClass={rClass}
               onClick={() => onToggle(d.itemId)}

@@ -143,7 +143,7 @@ export function PartySpeedLoadout({
       </div>
       <div class="xp-warn speed-note">
         Regra in-game: {SPEED_POINTS_PER_SEC} SPEED = −1s no respawn. BOH +20 ≈ −1.0s. Mesmo ciclo
-        afeta XP/h e GP/h.
+        afeta XP/h e gp/h.
       </div>
     </div>
   );

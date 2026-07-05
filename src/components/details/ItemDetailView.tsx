@@ -35,7 +35,7 @@ export function ItemDetailView({ it, data, indexes, openDetail }: Props) {
       l: 'Duração',
       v: numField(it, 'timmingMinutes') != null ? `${numField(it, 'timmingMinutes')} min` : undefined,
     },
-    { l: 'Venda NPC', v: it.npcSellPrice != null ? `${it.npcSellPrice}g` : undefined },
+    { l: 'Venda NPC', v: it.npcSellPrice != null ? `${it.npcSellPrice.toLocaleString('pt-BR')} gp` : undefined },
     { l: 'Peso', v: it.weight != null ? `${it.weight}g` : undefined },
   ].filter((x) => x.v != null);
 

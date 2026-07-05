@@ -10,6 +10,16 @@ export function fmtCompact(n: number): string {
   return fmt(Math.round(n));
 }
 
+/** e.g. "1.234 gp" */
+export function fmtGp(n: number): string {
+  return `${Math.round(n).toLocaleString('pt-BR')} gp`;
+}
+
+/** e.g. "18k gp/h" */
+export function fmtGpPerHour(n: number): string {
+  return `${fmtCompact(n)} gp/h`;
+}
+
 export function escapeHTML(s: string): string {
   return String(s).replace(/[&<>"']/g, (ch) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]!,

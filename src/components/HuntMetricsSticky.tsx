@@ -1,4 +1,4 @@
-import { fmtCompact } from '../lib/format';
+import { fmtGpPerHour } from '../lib/format';
 import type { HuntMetrics } from '../lib/hunt-metrics';
 
 interface HuntMetricsStickyProps {
@@ -31,11 +31,11 @@ export function HuntMetricsSticky({
         <div class="hunt-sticky-block hunt-sticky-profit">
           <div class="hunt-sticky-profit-col">
             <span class="hunt-sticky-lbl">Com filtro</span>
-            <span class="hunt-sticky-val profit">{fmtCompact(filtered)} gp/h</span>
+            <span class="hunt-sticky-val profit">{fmtGpPerHour(filtered)}</span>
           </div>
           <div class="hunt-sticky-profit-col">
             <span class="hunt-sticky-lbl">Total drops</span>
-            <span class="hunt-sticky-val">{fmtCompact(base)} gp/h</span>
+            <span class="hunt-sticky-val">{fmtGpPerHour(base)}</span>
           </div>
         </div>
       )}

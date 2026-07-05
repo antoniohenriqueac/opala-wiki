@@ -78,7 +78,7 @@ export function HuntsPage(_props: { path?: string }) {
     <>
       <header class="page-header">
         <h1>Hunt Finder</h1>
-        <p>Encontre as melhores hunts para o seu personagem — XP/h e lucro estimado.</p>
+        <p>Encontre as melhores hunts para o seu personagem — XP/h e gp/h estimado.</p>
       </header>
       <SearchBar value={filters.query} onInput={(q) => patch({ query: q })} placeholder="Buscar hunt ou criatura…" />
       <HuntFilters state={filters} onChange={patch} />

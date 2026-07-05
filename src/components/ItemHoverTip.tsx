@@ -3,7 +3,7 @@ import { render } from 'preact';
 import type { ComponentChildren } from 'preact';
 import type { Item, SpriteAsset } from '../lib/types';
 import { itemHoverInfo } from '../lib/item-summary';
-import { fmtChance } from '../lib/format';
+import { fmtChance, fmtGp, fmtGpPerHour } from '../lib/format';
 import { SpriteIcon } from './SpriteIcon';
 
 interface ItemHoverTipProps {
@@ -12,6 +12,8 @@ interface ItemHoverTipProps {
   onClick?: () => void;
   /** Drop chance % — shown in loot grids */
   chance?: number;
+  /** Estimated NPC gp/h in hunt context */
+  gpPerHour?: number;
   invAssets?: Record<string, SpriteAsset>;
   /** Rarity border class e.g. loot-rare */
   rarityClass?: string;
@@ -39,12 +41,14 @@ function TooltipCard({
   item,
   pos,
   chance,
+  gpPerHour,
   invAssets,
   rarityClass,
 }: {
   item: Item;
   pos: TipPos;
   chance?: number;
+  gpPerHour?: number;
   invAssets?: Record<string, SpriteAsset>;
   rarityClass?: string;
 }) {
@@ -80,7 +84,15 @@ function TooltipCard({
         )}
         <div class="item-hover-foot">
           {info.npcPrice != null && (
-            <span class="item-hover-gp">{info.npcPrice.toLocaleString('pt-BR')} gp</span>
+            <span class="item-hover-gp">
+              {fmtGp(info.npcPrice)}
+              {gpPerHour != null && gpPerHour > 0 && (
+                <span class="item-hover-gph"> ({fmtGpPerHour(gpPerHour)})</span>
+              )}
+            </span>
+          )}
+          {info.npcPrice == null && gpPerHour != null && gpPerHour > 0 && (
+            <span class="item-hover-gp">{fmtGpPerHour(gpPerHour)}</span>
           )}
           {chance != null && chance > 0 && (
             <span class="item-hover-drop">{fmtChance(chance)} drop</span>
@@ -96,6 +108,7 @@ export function ItemHoverTip({
   class: className,
   onClick,
   chance,
+  gpPerHour,
   invAssets,
   rarityClass,
   children,
@@ -127,6 +140,7 @@ export function ItemHoverTip({
           item={item}
           pos={pos}
           chance={chance}
+          gpPerHour={gpPerHour}
           invAssets={invAssets}
           rarityClass={rarityClass}
         />,
@@ -135,7 +149,7 @@ export function ItemHoverTip({
     } else {
       render(null, portal);
     }
-  }, [item, pos, chance, invAssets, rarityClass]);
+  }, [item, pos, chance, gpPerHour, invAssets, rarityClass]);
 
   useEffect(() => () => render(null, getPortal()), []);
 

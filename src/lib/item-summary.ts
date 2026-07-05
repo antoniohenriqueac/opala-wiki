@@ -1,5 +1,6 @@
 import type { Item } from './types';
 import { vocationLabel } from './item-filters';
+import { fmtGp } from './format';
 
 export interface ItemHoverInfo {
   level?: number;
@@ -39,7 +40,7 @@ export function itemHoverLines(it: Item): string[] {
   if (info.stats) lines.push(info.stats);
   if (info.slot) lines.push(info.slot);
   if (info.weaponType) lines.push(info.weaponType);
-  if (info.npcPrice != null) lines.push(`NPC ${info.npcPrice.toLocaleString('pt-BR')} gp`);
+  if (info.npcPrice != null) lines.push(`NPC ${fmtGp(info.npcPrice)}`);
   return lines;
 }
 

@@ -1,4 +1,4 @@
-import { fmtCompact } from '../lib/format';
+import { fmtGpPerHour } from '../lib/format';
 import type { HuntMetrics } from '../lib/hunt-metrics';
 
 interface ProfitSummaryProps {
@@ -16,22 +16,22 @@ export function ProfitSummary({ metrics, filteredCount, totalLootCount }: Profit
   return (
     <div class="profit-summary panel">
       <div class="profit-summary-head">
-        <span class="profit-summary-title">Lucro estimado (NPC)</span>
+        <span class="profit-summary-title">Lucro estimado NPC (gp/h)</span>
         {metrics.respawnLimited && <span class="tag respawn-cap">respawn cap</span>}
       </div>
       <div class="profit-summary-grid">
         <div class="profit-stat">
           <span class="profit-lbl">Com filtro</span>
-          <span class="profit-val profit">{fmtCompact(filtered)} gp/h</span>
+          <span class="profit-val profit">{fmtGpPerHour(filtered)}</span>
         </div>
         <div class="profit-stat">
           <span class="profit-lbl">Total drops</span>
-          <span class="profit-val">{fmtCompact(base)} gp/h</span>
+          <span class="profit-val">{fmtGpPerHour(base)}</span>
         </div>
         {delta > 0 && (
           <div class="profit-stat">
             <span class="profit-lbl">Excluído</span>
-            <span class="profit-val muted">−{fmtCompact(delta)} gp/h</span>
+            <span class="profit-val muted">−{fmtGpPerHour(delta)}</span>
           </div>
         )}
       </div>

@@ -1,5 +1,5 @@
 import type { HuntMetrics } from '../lib/hunt-metrics';
-import { fmtCompact } from '../lib/format';
+import { fmtCompact, fmtGpPerHour } from '../lib/format';
 import { SpriteIcon } from './SpriteIcon';
 import { useWiki } from '../context/WikiContext';
 
@@ -29,7 +29,7 @@ export function HuntCard({ metrics, onClick }: HuntCardProps) {
       </div>
       <div class="hunt-metrics">
         <span class="tag xp">{fmtCompact(xpPerHour)} xp/h</span>
-        <span class="tag profit">{fmtCompact(profitPerHour)} gp/h</span>
+        <span class="tag profit">{fmtGpPerHour(profitPerHour)}</span>
       </div>
       <div class="card-tags">
         {hunt.recommendedLevel != null && (
