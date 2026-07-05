@@ -1,0 +1,29 @@
+{
+  "name": "stonegy-wiki",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "seed": "tsx tools/extract/index.ts",
+    "seed:codexloot": "tsx scripts/seed-from-codexloot.ts",
+    "extract": "tsx tools/extract/index.ts",
+    "discover": "tsx tools/extract/discover.ts",
+    "scan-codexloot": "tsx scripts/scan-codexloot.ts"
+  },
+  "dependencies": {
+    "playwright": "^1.61.1",
+    "preact": "^10.29.3",
+    "preact-router": "^4.1.2",
+    "sharp": "^0.35.3",
+    "tsx": "^4.23.0"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.5",
+    "@types/node": "^24.13.2",
+    "typescript": "~6.0.2",
+    "vite": "^8.1.1"
+  }
+}

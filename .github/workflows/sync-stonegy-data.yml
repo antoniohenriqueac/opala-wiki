@@ -1,0 +1,46 @@
+name: Sync Stonegy Data
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Seed if missing
+        run: |
+          if [ ! -f public/data/wiki_data.js ]; then npm run seed; fi
+
+      - run: npx playwright install chromium
+
+      - name: Extract data
+        run: npm run extract
+        env:
+          CI: 'true'
+          STONEGY_EMAIL: ${{ secrets.STONEGY_EMAIL }}
+          STONEGY_PASSWORD: ${{ secrets.STONEGY_PASSWORD }}
+
+      - name: Commit if changed
+        run: |
+          if [ -f .extract-changed ] || ! git diff --quiet public/data/; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add public/data/
+            git commit -m "chore: sync stonegy data $(date -u +%Y-%m-%d)"
+            git push
+          else
+            echo "No data changes"
+          fi

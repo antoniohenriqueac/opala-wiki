@@ -1,0 +1,13 @@
+{
+  "lastUpdated": "2026-07-05T18:10:00.448Z",
+  "source": "codexloot-seed",
+  "counts": {
+    "items": 1427,
+    "monsters": 364,
+    "hunts": 114,
+    "quests": 12
+  },
+  "hashes": {
+    "wiki_data": "seed"
+  }
+}
