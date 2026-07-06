@@ -161,6 +161,20 @@ button {
   border: 1px solid var(--border-strong);
 }
 
+.nav-link-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  flex-shrink: 0;
+}
+
+.nav-link-icon-img {
+  display: block;
+  image-rendering: pixelated;
+  object-fit: contain;
+}
+
 .sidebar-footer {
   margin-top: auto;
   font-size: 0.72rem;

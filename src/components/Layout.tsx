@@ -6,13 +6,13 @@ import { isModifiedClick, useRouter } from '../context/RouterContext';
 const DONATE_PIX_URL =
   'https://nubank.com.br/cobrar/5hux2/6a4aa55b-32b6-44ca-a71f-85d7fc5ef765';
 
-const NAV = [
+const NAV: Array<{ href: string; label: string; icon?: string; iconSrc?: string }> = [
   { href: '/hunts', label: 'Hunt Finder', icon: '⚔' },
   { href: '/bestiary', label: 'Bestiário', icon: '👹' },
   { href: '/items', label: 'Itens', icon: '🗡' },
   { href: '/quests', label: 'Missões', icon: '📜' },
   { href: '/exp-share', label: 'Exp Share', icon: '⚡' },
-  { href: '/coins', label: 'Coins', icon: '💰' },
+  { href: '/coins', label: 'Compre/Venda TC', iconSrc: 'tc-coin.png' },
 ];
 
 interface LayoutProps {
@@ -72,7 +72,19 @@ export function Layout({ url = '/hunts', children }: LayoutProps) {
                     : ''
               }`}
             >
-              <span>{item.icon}</span>
+              <span class="nav-link-icon">
+                {item.iconSrc ? (
+                  <img
+                    class="nav-link-icon-img"
+                    src={withBase(item.iconSrc)}
+                    alt=""
+                    width={20}
+                    height={20}
+                  />
+                ) : (
+                  item.icon
+                )}
+              </span>
               {item.label}
             </a>
           ))}

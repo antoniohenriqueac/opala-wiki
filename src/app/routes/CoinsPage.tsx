@@ -409,7 +409,7 @@ export function CoinsPage() {
   if (loadError && !packages.length) {
     return (
       <div class="coins-page">
-        <h1>Loja de Coins</h1>
+        <h1>Compre/Venda TC</h1>
         <p class="coins-error">{loadError}</p>
         <p class="muted">Configure VITE_COINS_API_URL e inicie a API em server/.</p>
       </div>
@@ -418,7 +418,7 @@ export function CoinsPage() {
 
   return (
     <div class="coins-page">
-      <h1>Loja de Coins</h1>
+      <h1>Compre/Venda TC</h1>
       <p class="coins-disclaimer">
         Serviço independente — não afiliado ao Stonegy. Compra e venda de coins com entrega manual
         in-game. Tempo de entrega: até 30 minutos em horário comercial.
