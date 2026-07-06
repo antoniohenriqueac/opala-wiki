@@ -12,7 +12,7 @@ interface SpriteIconProps {
 
 function sheetUrl(kind: 'item' | 'monster', page: number): string {
   const prefix = kind === 'monster' ? 'monsters' : 'inventory';
-  return withBase(`assets/${prefix}-0${page}.webp`);
+  return withBase(`assets/${prefix}-${String(page).padStart(2, '0')}.webp`);
 }
 
 export function SpriteIcon({ kind, imageName, animated, size, assets }: SpriteIconProps) {
@@ -35,7 +35,7 @@ export function SpriteIcon({ kind, imageName, animated, size, assets }: SpriteIc
     if (!document.getElementById(kfName)) {
       const style = document.createElement('style');
       style.id = kfName;
-      const endX = strip.sx + strip.stepX * frames;
+      const endX = strip.sx + strip.stepX * (frames - 1);
       style.textContent = `@keyframes ${kfName}{from{background-position:-${strip.sx}px -${strip.sy}px}to{background-position:-${endX}px -${strip.sy}px}}`;
       document.head.appendChild(style);
     }
