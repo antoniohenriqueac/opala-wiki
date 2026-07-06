@@ -17,8 +17,6 @@ import { CalcFieldLabel } from './CalcFieldLabel';
 import { StaminaInput } from './StaminaInput';
 import { XpBoostToggle } from './XpBoostToggle';
 
-const STEP_KEY = (huntId: number) => `hunt-calc-step:${huntId}`;
-
 interface HuntCalcWizardProps {
   hunt: Hunt;
   monsters: Monster[];
@@ -60,27 +58,28 @@ export function HuntCalcWizard({
     return s;
   }, [lootEntries.length]);
 
-  const [activeStep, setActiveStep] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STEP_KEY(hunt.id));
-      if (saved && steps.some((s) => s.id === saved)) return saved;
-    } catch {
-      /* ignore */
-    }
-    return 'respawn';
-  });
+  const [activeStep, setActiveStep] = useState('respawn');
+  const respawnReady =
+    typeof settings.respawnSec === 'number' && settings.respawnSec > 0;
+
+  useEffect(() => {
+    setActiveStep('respawn');
+  }, [hunt.id]);
 
   useEffect(() => {
     if (!steps.some((s) => s.id === activeStep)) setActiveStep('respawn');
   }, [steps, activeStep]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STEP_KEY(hunt.id), activeStep);
-    } catch {
-      /* ignore */
-    }
-  }, [hunt.id, activeStep]);
+    if (!respawnReady && activeStep !== 'respawn') setActiveStep('respawn');
+  }, [respawnReady, activeStep]);
+
+  const selectStep = (id: string) => {
+    const idx = steps.findIndex((s) => s.id === id);
+    const respawnIdx = steps.findIndex((s) => s.id === 'respawn');
+    if (idx > respawnIdx && !respawnReady) return;
+    setActiveStep(id);
+  };
 
   if (!monsters.length) return null;
 
@@ -95,7 +94,6 @@ export function HuntCalcWizard({
   const canPrev = stepIdx > 0;
   const canNext = stepIdx < steps.length - 1;
   const manualRespawn = respawn.manual;
-  const respawnReady = manualRespawn;
   const respawnBlocked = activeStep === 'respawn' && !respawnReady;
 
   const applyPreset = (name: string) => {
@@ -115,7 +113,12 @@ export function HuntCalcWizard({
         </p>
       </div>
 
-      <HuntCalcStepper steps={steps} active={activeStep} onSelect={setActiveStep} />
+      <HuntCalcStepper
+        steps={steps}
+        active={activeStep}
+        onSelect={selectStep}
+        lockedAfterStepId={respawnReady ? undefined : 'respawn'}
+      />
 
       <div class="hunt-calc-step-panel">
         {activeStep === 'respawn' && (
@@ -364,7 +367,7 @@ export function HuntCalcWizard({
           type="button"
           class="chip"
           disabled={!canPrev}
-          onClick={() => canPrev && setActiveStep(steps[stepIdx - 1].id)}
+          onClick={() => canPrev && selectStep(steps[stepIdx - 1].id)}
         >
           ← Anterior
         </button>
@@ -375,7 +378,7 @@ export function HuntCalcWizard({
           type="button"
           class="chip chip-primary"
           disabled={!canNext || respawnBlocked}
-          onClick={() => canNext && !respawnBlocked && setActiveStep(steps[stepIdx + 1].id)}
+          onClick={() => canNext && !respawnBlocked && selectStep(steps[stepIdx + 1].id)}
         >
           Próximo →
         </button>

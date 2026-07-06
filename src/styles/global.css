@@ -942,6 +942,19 @@ body::-webkit-scrollbar-button,
   opacity: 0.9;
 }
 
+.calc-step.locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.calc-step.locked:hover {
+  color: var(--text-dim);
+}
+
+.calc-step.locked:hover .calc-step-indicator {
+  border-color: var(--border);
+}
+
 @media (max-width: 480px) {
   .calc-stepper-track { left: 8%; right: 8%; }
   .calc-step-label { font-size: 0.6rem; }

@@ -7,6 +7,8 @@ interface HuntCalcStepperProps {
   steps: StepDef[];
   active: string;
   onSelect: (id: string) => void;
+  /** Steps after this id are not selectable until respawn is configured. */
+  lockedAfterStepId?: string;
 }
 
 function StepCheck() {
@@ -24,9 +26,16 @@ function StepCheck() {
   );
 }
 
-export function HuntCalcStepper({ steps, active, onSelect }: HuntCalcStepperProps) {
+export function HuntCalcStepper({
+  steps,
+  active,
+  onSelect,
+  lockedAfterStepId,
+}: HuntCalcStepperProps) {
   const activeIdx = steps.findIndex((s) => s.id === active);
   const progress = steps.length > 1 ? (activeIdx / (steps.length - 1)) * 100 : 0;
+  const lockIdx =
+    lockedAfterStepId != null ? steps.findIndex((s) => s.id === lockedAfterStepId) : -1;
 
   return (
     <nav class="calc-stepper" aria-label="Passos da calculadora">
@@ -37,13 +46,16 @@ export function HuntCalcStepper({ steps, active, onSelect }: HuntCalcStepperProp
         {steps.map((step, i) => {
           const isActive = step.id === active;
           const isDone = i < activeIdx;
+          const isLocked = lockIdx >= 0 && i > lockIdx;
           return (
             <button
               type="button"
               key={step.id}
-              class={`calc-step${isActive ? ' active' : ''}${isDone ? ' done' : ''}`}
-              onClick={() => onSelect(step.id)}
+              class={`calc-step${isActive ? ' active' : ''}${isDone ? ' done' : ''}${isLocked ? ' locked' : ''}`}
+              onClick={() => !isLocked && onSelect(step.id)}
+              disabled={isLocked}
               aria-current={isActive ? 'step' : undefined}
+              aria-disabled={isLocked || undefined}
             >
               <span class="calc-step-indicator">
                 {isDone ? <StepCheck /> : <span class="calc-step-num">{i + 1}</span>}
