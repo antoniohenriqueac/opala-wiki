@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from 'preact/hooks';
+import { PixQrCode } from '../../components/coins/PixQrCode';
+import { useRouter } from '../../context/RouterContext';
 import type { CoinOrder, CoinPackage } from '../../lib/types';
 import {
   coinsApiConfigured,
@@ -10,6 +12,12 @@ import {
   mockPayOrder,
   orderTrackUrl,
 } from '../../lib/coins-api';
+import {
+  getLastOrderToken,
+  getSavedOrders,
+  rememberOrder,
+  type SavedCoinOrder,
+} from '../../lib/coins-order-storage';
 
 type Tab = 'buy' | 'sell' | 'track';
 
@@ -22,6 +30,15 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: 'Cancelado',
   expired: 'Expirado',
 };
+
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function PackageGrid({
   packages,
@@ -144,36 +161,88 @@ function OrderForm({
   );
 }
 
-function OrderResult({ order, onRefresh }: { order: CoinOrder; onRefresh: () => void }) {
+function TrackingTokenBox({ token, highlight }: { token: string; highlight?: boolean }) {
+  const [copied, setCopied] = useState<'token' | 'link' | null>(null);
+
+  const doCopy = async (kind: 'token' | 'link') => {
+    const text = kind === 'token' ? token : orderTrackUrl(token);
+    if (await copyText(text)) {
+      setCopied(kind);
+      setTimeout(() => setCopied(null), 2500);
+    }
+  };
+
+  return (
+    <div class={`coins-tracking${highlight ? ' coins-tracking-new' : ''}`}>
+      <p class="coins-tracking-title">Código de rastreamento</p>
+      <p class="coins-tracking-hint">
+        Guarde este código — é a única forma de acompanhar seu pedido depois. Também salvamos no seu
+        navegador.
+      </p>
+      <div class="coins-tracking-token">
+        <code>{token}</code>
+        <button type="button" class="coins-confirm secondary" onClick={() => doCopy('token')}>
+          {copied === 'token' ? 'Copiado!' : 'Copiar código'}
+        </button>
+      </div>
+      <button type="button" class="coins-link-btn" onClick={() => doCopy('link')}>
+        {copied === 'link' ? 'Link copiado!' : 'Copiar link de acompanhamento'}
+      </button>
+    </div>
+  );
+}
+
+function OrderDetail({
+  order,
+  onRefresh,
+  showTrackingHighlight,
+}: {
+  order: CoinOrder;
+  onRefresh?: () => void;
+  showTrackingHighlight?: boolean;
+}) {
   const [mocking, setMocking] = useState(false);
+  const [pixCopied, setPixCopied] = useState(false);
 
   const tryMockPay = async () => {
     setMocking(true);
     try {
       await mockPayOrder(order.id);
-      onRefresh();
+      onRefresh?.();
     } catch {
-      /* mock only in dev */
+      /* mock only when enabled */
     } finally {
       setMocking(false);
     }
   };
 
+  const copyPix = async () => {
+    if (!order.mpQrCode) return;
+    if (await copyText(order.mpQrCode)) {
+      setPixCopied(true);
+      setTimeout(() => setPixCopied(false), 2500);
+    }
+  };
+
   return (
     <div class="coins-result">
-      <h3>Pedido criado</h3>
       <p>
-        Status: <strong>{STATUS_LABEL[order.status] ?? order.status}</strong>
+        Status:{' '}
+        <span class={`coins-status coins-status-${order.status}`}>
+          {STATUS_LABEL[order.status] ?? order.status}
+        </span>
       </p>
       <p>
-        {order.coinAmount.toLocaleString('pt-BR')} coins · {fmtBrl(order.brlAmount)} · Char:{' '}
-        <strong>{order.characterName}</strong>
+        {order.type === 'buy' ? 'Compra' : 'Venda'} · {order.coinAmount.toLocaleString('pt-BR')} coins ·{' '}
+        {fmtBrl(order.brlAmount)} · Char: <strong>{order.characterName}</strong>
       </p>
+
+      <TrackingTokenBox token={order.accessToken} highlight={showTrackingHighlight} />
 
       {order.type === 'buy' && order.status === 'pending_payment' && order.mpQrCode && (
         <div class="coins-pix">
-          <p>Escaneie ou copie o PIX:</p>
-          {order.mpQrBase64 && (
+          <p class="coins-pix-lead">Pague via PIX para confirmar o pedido:</p>
+          {order.mpQrBase64 ? (
             <img
               class="coins-pix-qr"
               src={`data:image/png;base64,${order.mpQrBase64}`}
@@ -181,14 +250,13 @@ function OrderResult({ order, onRefresh }: { order: CoinOrder; onRefresh: () => 
               width={200}
               height={200}
             />
+          ) : (
+            <PixQrCode value={order.mpQrCode} size={200} />
           )}
+          <p class="coins-pix-sub">Ou copie o código PIX abaixo:</p>
           <textarea class="coins-pix-code" readOnly rows={4} value={order.mpQrCode} />
-          <button
-            type="button"
-            class="coins-confirm secondary"
-            onClick={() => navigator.clipboard.writeText(order.mpQrCode ?? '')}
-          >
-            Copiar código PIX
+          <button type="button" class="coins-confirm secondary" onClick={copyPix}>
+            {pixCopied ? 'PIX copiado!' : 'Copiar código PIX'}
           </button>
           {import.meta.env.DEV && (
             <button type="button" class="coins-confirm secondary" disabled={mocking} onClick={tryMockPay}>
@@ -207,85 +275,114 @@ function OrderResult({ order, onRefresh }: { order: CoinOrder; onRefresh: () => 
           <p>Após confirmarmos o recebimento, enviaremos {fmtBrl(order.brlAmount)} para sua chave PIX.</p>
         </div>
       )}
+    </div>
+  );
+}
 
-      <p class="coins-track-link">
-        Acompanhe:{' '}
-        <a href={orderTrackUrl(order.accessToken)}>{orderTrackUrl(order.accessToken)}</a>
-      </p>
+function SavedOrdersList({
+  orders,
+  activeToken,
+  onSelect,
+}: {
+  orders: SavedCoinOrder[];
+  activeToken: string;
+  onSelect: (token: string) => void;
+}) {
+  if (!orders.length) return null;
+
+  return (
+    <div class="coins-saved">
+      <p class="coins-saved-title">Seus pedidos neste navegador</p>
+      <ul class="coins-saved-list">
+        {orders.map((o) => (
+          <li key={o.accessToken}>
+            <button
+              type="button"
+              class={`coins-saved-item${o.accessToken === activeToken ? ' active' : ''}`}
+              onClick={() => onSelect(o.accessToken)}
+            >
+              <span class="coins-saved-type">{o.type === 'buy' ? 'Compra' : 'Venda'}</span>
+              <span>
+                {o.coinAmount.toLocaleString('pt-BR')} coins · {o.characterName}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
 
 function TrackPanel({ initialToken }: { initialToken: string }) {
-  const [token, setToken] = useState(initialToken);
+  const { navigate } = useRouter();
+  const [token, setToken] = useState(initialToken || getLastOrderToken() || '');
   const [order, setOrder] = useState<CoinOrder | null>(null);
   const [error, setError] = useState('');
+  const [saved, setSaved] = useState<SavedCoinOrder[]>(() => getSavedOrders());
+  const [highlightTracking, setHighlightTracking] = useState(Boolean(initialToken));
 
-  const load = useCallback(async () => {
-    if (!token.trim()) return;
+  const load = useCallback(async (t: string) => {
+    const trimmed = t.trim();
+    if (!trimmed) return;
     setError('');
     try {
-      const o = await fetchOrder(token.trim());
+      const o = await fetchOrder(trimmed);
       setOrder(o);
+      rememberOrder(o);
+      setSaved(getSavedOrders());
     } catch {
       setOrder(null);
       setError('Pedido não encontrado.');
     }
-  }, [token]);
+  }, []);
+
+  const selectToken = (t: string) => {
+    setToken(t);
+    setHighlightTracking(false);
+    navigate(`/coins?pedido=${encodeURIComponent(t)}`);
+    void load(t);
+  };
 
   useEffect(() => {
-    if (!initialToken) return;
-    load();
-    const id = setInterval(load, 10_000);
+    const t = initialToken || token;
+    if (!t.trim()) return;
+    void load(t);
+    const id = setInterval(() => load(t), 10_000);
     return () => clearInterval(id);
   }, [initialToken, load]);
 
+  useEffect(() => {
+    if (initialToken) setToken(initialToken);
+  }, [initialToken]);
+
   return (
     <div class="coins-track">
+      <SavedOrdersList orders={saved} activeToken={token} onSelect={selectToken} />
+
       <div class="coins-field row">
         <input
-          placeholder="Token do pedido"
+          placeholder="Cole o código de rastreamento"
           value={token}
           onInput={(e) => setToken(e.currentTarget.value)}
         />
-        <button type="button" class="coins-confirm secondary" onClick={load}>
+        <button type="button" class="coins-confirm secondary" onClick={() => selectToken(token)}>
           Buscar
         </button>
       </div>
       {error && <p class="coins-error">{error}</p>}
-      {order && (
-        <div class="coins-result">
-          <p>
-            <span class={`coins-status coins-status-${order.status}`}>
-              {STATUS_LABEL[order.status] ?? order.status}
-            </span>
-          </p>
-          <p>
-            {order.type === 'buy' ? 'Compra' : 'Venda'} · {order.coinAmount.toLocaleString('pt-BR')} coins ·{' '}
-            {fmtBrl(order.brlAmount)}
-          </p>
-          <p>
-            Char: <strong>{order.characterName}</strong>
-          </p>
-          {order.type === 'sell' && order.gameReceiverChar && order.status === 'awaiting_transfer' && (
-            <p>
-              Transfira coins para <strong>{order.gameReceiverChar}</strong>
-            </p>
-          )}
-        </div>
-      )}
+      {order && <OrderDetail order={order} onRefresh={() => load(token)} showTrackingHighlight={highlightTracking} />}
     </div>
   );
 }
 
 export function CoinsPage() {
+  const { navigate } = useRouter();
   const params = new URLSearchParams(window.location.search);
   const pedidoToken = params.get('pedido') ?? '';
 
   const [tab, setTab] = useState<Tab>(pedidoToken ? 'track' : 'buy');
   const [packages, setPackages] = useState<CoinPackage[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [order, setOrder] = useState<CoinOrder | null>(null);
   const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
@@ -298,11 +395,16 @@ export function CoinsPage() {
       .catch((e) => setLoadError(e instanceof Error ? e.message : 'Erro ao carregar pacotes'));
   }, []);
 
-  const refreshOrder = useCallback(async () => {
-    if (!order) return;
-    const o = await fetchOrder(order.accessToken);
-    setOrder(o);
-  }, [order]);
+  useEffect(() => {
+    if (pedidoToken) setTab('track');
+  }, [pedidoToken]);
+
+  const handleOrderSuccess = (order: CoinOrder) => {
+    rememberOrder(order);
+    navigate(`/coins?pedido=${encodeURIComponent(order.accessToken)}`);
+    setTab('track');
+    setSelectedId(null);
+  };
 
   if (loadError && !packages.length) {
     return (
@@ -328,7 +430,7 @@ export function CoinsPage() {
           class={tab === 'buy' ? 'active' : ''}
           onClick={() => {
             setTab('buy');
-            setOrder(null);
+            navigate('/coins');
           }}
         >
           Comprar
@@ -338,7 +440,7 @@ export function CoinsPage() {
           class={tab === 'sell' ? 'active' : ''}
           onClick={() => {
             setTab('sell');
-            setOrder(null);
+            navigate('/coins');
           }}
         >
           Vender
@@ -354,8 +456,6 @@ export function CoinsPage() {
 
       {tab === 'track' ? (
         <TrackPanel initialToken={pedidoToken} />
-      ) : order ? (
-        <OrderResult order={order} onRefresh={refreshOrder} />
       ) : (
         <>
           <p class="coins-subtitle">
@@ -367,12 +467,7 @@ export function CoinsPage() {
             selectedId={selectedId}
             onSelect={setSelectedId}
           />
-          <OrderForm
-            mode={tab}
-            packages={packages}
-            selectedId={selectedId}
-            onSuccess={setOrder}
-          />
+          <OrderForm mode={tab} packages={packages} selectedId={selectedId} onSuccess={handleOrderSuccess} />
         </>
       )}
     </div>

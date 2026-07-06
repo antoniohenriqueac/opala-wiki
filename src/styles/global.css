@@ -2516,6 +2516,128 @@ body::-webkit-scrollbar-button,
   border-radius: var(--radius-sm);
 }
 
+.coins-pix-qr-loading {
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.coins-pix-lead {
+  font-weight: 600;
+  margin: 0;
+}
+
+.coins-pix-sub {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.coins-tracking {
+  margin: 1rem 0;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.coins-tracking-new {
+  border-color: var(--gold);
+  background: var(--gold-glow);
+}
+
+.coins-tracking-title {
+  font-weight: 700;
+  margin: 0 0 0.35rem;
+  color: var(--gold);
+}
+
+.coins-tracking-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0 0 0.65rem;
+}
+
+.coins-tracking-token {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.coins-tracking-token code {
+  flex: 1;
+  min-width: 12rem;
+  padding: 0.45rem 0.6rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  word-break: break-all;
+}
+
+.coins-link-btn {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--gold);
+  text-decoration: underline;
+  padding: 0;
+}
+
+.coins-saved {
+  margin-bottom: 1rem;
+}
+
+.coins-saved-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  margin: 0 0 0.5rem;
+}
+
+.coins-saved-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.coins-saved-item {
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.coins-saved-item:hover,
+.coins-saved-item.active {
+  border-color: var(--gold);
+  background: var(--gold-glow);
+}
+
+.coins-saved-type {
+  font-weight: 700;
+  color: var(--gold);
+}
+
 .coins-instructions {
   padding: 0.75rem;
   background: var(--gold-glow);
