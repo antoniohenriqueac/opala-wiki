@@ -46,7 +46,7 @@ jobs:
 
       - name: Smoke test
         run: |
-          timeout 10 npm run dev &
+          timeout 10 node dist/index.js &
           sleep 3
           curl -sf http://localhost:3001/health
           curl -sf http://localhost:3001/api/packages | head -c 200
