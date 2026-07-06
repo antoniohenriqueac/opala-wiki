@@ -49,11 +49,25 @@ Ver [docs/stonegy-endpoints.md](docs/stonegy-endpoints.md).
 - `public/assets/` — sprite atlases webp
 - `tools/extract/` — pipeline automatizado
 
+## Loja de Coins
+
+Marketplace intermediador (compra/venda de coins com PIX). Requer API separada:
+
+```bash
+cd server && cp .env.example .env && npm install && npm run dev
+# Em outro terminal, com .env.local (VITE_COINS_API_URL=/coins-api):
+npm run dev
+```
+
+Ver [server/README.md](server/README.md) para Mercado Pago, deploy e painel admin.
+
 ## Deploy (GitHub Pages)
 
 Site publicado em **[https://antoniohenriqueac.github.io/opala-wiki/](https://antoniohenriqueac.github.io/opala-wiki/)** via GitHub Actions (`.github/workflows/deploy-pages.yml`).
 
 Push na branch `main` dispara build + deploy automaticamente.
+
+Configure o secret `VITE_COINS_API_URL` no repositório para apontar à API de coins em produção.
 
 ## CI
 

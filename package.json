@@ -12,7 +12,9 @@
     "extract": "tsx tools/extract/index.ts",
     "discover": "tsx tools/extract/discover.ts",
     "capture:lure-pace": "tsx tools/extract/capture-lure-pace.ts",
-    "scan-codexloot": "tsx scripts/scan-codexloot.ts"
+    "scan-codexloot": "tsx scripts/scan-codexloot.ts",
+    "dev:api": "npm run dev --prefix server",
+    "dev:all": "npm run dev:api & npm run dev"
   },
   "dependencies": {
     "playwright": "^1.61.1",
