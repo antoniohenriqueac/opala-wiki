@@ -20,7 +20,7 @@ import {
   type SavedCoinOrder,
 } from '../../lib/coins-order-storage';
 
-type Tab = 'buy' | 'sell' | 'track';
+type Tab = 'buy' | 'sell' | 'track' | 'history';
 
 const STATUS_LABEL: Record<string, string> = {
   pending_payment: 'Aguardando PIX',
@@ -284,38 +284,51 @@ function SavedOrdersList({
   orders,
   activeToken,
   onSelect,
+  emptyMessage,
 }: {
   orders: SavedCoinOrder[];
   activeToken: string;
   onSelect: (token: string) => void;
+  emptyMessage?: string;
 }) {
-  if (!orders.length) return null;
+  if (!orders.length) {
+    return emptyMessage ? <p class="coins-history-empty">{emptyMessage}</p> : null;
+  }
 
   return (
-    <div class="coins-saved">
-      <p class="coins-saved-title">Seus pedidos neste navegador</p>
-      <ul class="coins-saved-list">
-        {orders.map((o) => (
-          <li key={o.accessToken}>
-            <button
-              type="button"
-              class={`coins-saved-item${o.accessToken === activeToken ? ' active' : ''}`}
-              onClick={() => onSelect(o.accessToken)}
-            >
-              <span class="coins-saved-main">
-                <span class="coins-saved-type">{o.type === 'buy' ? 'Compra' : 'Venda'}</span>
-                <span class="coins-saved-meta">
-                  {o.coinAmount.toLocaleString('pt-BR')} coins · {o.characterName}
-                </span>
+    <ul class="coins-saved-list">
+      {orders.map((o) => (
+        <li key={o.accessToken}>
+          <button
+            type="button"
+            class={`coins-saved-item${o.accessToken === activeToken ? ' active' : ''}`}
+            onClick={() => onSelect(o.accessToken)}
+          >
+            <span class="coins-saved-main">
+              <span class="coins-saved-type">{o.type === 'buy' ? 'Compra' : 'Venda'}</span>
+              <span class="coins-saved-meta">
+                {o.coinAmount.toLocaleString('pt-BR')} coins · {o.characterName}
+                {o.createdAt && (
+                  <span class="coins-saved-date">
+                    {' '}
+                    ·{' '}
+                    {new Date(o.createdAt).toLocaleDateString('pt-BR', {
+                      day: '2-digit',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
+                )}
               </span>
-              <span class={`coins-saved-status coins-status coins-status-${o.status}`}>
-                {STATUS_LABEL[o.status] ?? o.status}
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
+            </span>
+            <span class={`coins-saved-status coins-status coins-status-${o.status}`}>
+              {STATUS_LABEL[o.status] ?? o.status}
+            </span>
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -342,7 +355,6 @@ function TrackPanel({ initialToken }: { initialToken: string }) {
   const [token, setToken] = useState(initialToken || getLastOrderToken() || '');
   const [order, setOrder] = useState<CoinOrder | null>(null);
   const [error, setError] = useState('');
-  const [saved, setSaved] = useState<SavedCoinOrder[]>(() => getSavedOrders());
   const [highlightTracking, setHighlightTracking] = useState(Boolean(initialToken));
 
   const load = useCallback(async (t: string) => {
@@ -353,30 +365,17 @@ function TrackPanel({ initialToken }: { initialToken: string }) {
       const o = await fetchOrder(trimmed);
       setOrder(o);
       rememberOrder(o);
-      setSaved(getSavedOrders());
     } catch {
       setOrder(null);
       setError('Pedido não encontrado.');
     }
   }, []);
 
-  const selectToken = (t: string) => {
-    setToken(t);
+  const search = (t: string) => {
     setHighlightTracking(false);
     navigate(`/coins?pedido=${encodeURIComponent(t)}`);
     void load(t);
   };
-
-  useEffect(() => {
-    const sync = async () => {
-      const current = getSavedOrders();
-      if (!current.length) return;
-      setSaved(await refreshSavedStatuses(current));
-    };
-    void sync();
-    const id = setInterval(() => void sync(), 30_000);
-    return () => clearInterval(id);
-  }, []);
 
   useEffect(() => {
     const t = initialToken || token;
@@ -392,20 +391,95 @@ function TrackPanel({ initialToken }: { initialToken: string }) {
 
   return (
     <div class="coins-track">
-      <SavedOrdersList orders={saved} activeToken={token} onSelect={selectToken} />
-
+      <p class="coins-subtitle">Cole o código de rastreamento do seu pedido.</p>
       <div class="coins-field row">
         <input
-          placeholder="Cole o código de rastreamento"
+          placeholder="Código de rastreamento"
           value={token}
           onInput={(e) => setToken(e.currentTarget.value)}
         />
-        <button type="button" class="coins-confirm secondary" onClick={() => selectToken(token)}>
+        <button type="button" class="coins-confirm secondary" onClick={() => search(token)}>
           Buscar
         </button>
       </div>
       {error && <p class="coins-error">{error}</p>}
-      {order && <OrderDetail order={order} onRefresh={() => load(token)} showTrackingHighlight={highlightTracking} />}
+      {order && (
+        <OrderDetail
+          order={order}
+          onRefresh={() => load(token)}
+          showTrackingHighlight={highlightTracking}
+        />
+      )}
+    </div>
+  );
+}
+
+function HistoryPanel({ initialToken }: { initialToken: string }) {
+  const { navigate } = useRouter();
+  const [saved, setSaved] = useState<SavedCoinOrder[]>(() => getSavedOrders());
+  const [selectedToken, setSelectedToken] = useState(initialToken || saved[0]?.accessToken || '');
+  const [order, setOrder] = useState<CoinOrder | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const loadOrder = useCallback(async (t: string) => {
+    if (!t.trim()) {
+      setOrder(null);
+      return;
+    }
+    setLoading(true);
+    try {
+      const o = await fetchOrder(t.trim());
+      setOrder(o);
+      rememberOrder(o);
+      setSaved(getSavedOrders());
+    } catch {
+      setOrder(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const selectOrder = (t: string) => {
+    setSelectedToken(t);
+    navigate(`/coins?pedido=${encodeURIComponent(t)}&aba=historico`);
+    void loadOrder(t);
+  };
+
+  useEffect(() => {
+    const sync = async () => {
+      const current = getSavedOrders();
+      setSaved(current.length ? await refreshSavedStatuses(current) : current);
+    };
+    void sync();
+    const id = setInterval(() => void sync(), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    if (selectedToken) void loadOrder(selectedToken);
+    const id = setInterval(() => {
+      if (selectedToken) void loadOrder(selectedToken);
+    }, 10_000);
+    return () => clearInterval(id);
+  }, [selectedToken, loadOrder]);
+
+  useEffect(() => {
+    if (initialToken) setSelectedToken(initialToken);
+  }, [initialToken]);
+
+  return (
+    <div class="coins-history">
+      <p class="coins-subtitle">Pedidos salvos neste navegador — clique para ver detalhes.</p>
+      <SavedOrdersList
+        orders={saved}
+        activeToken={selectedToken}
+        onSelect={selectOrder}
+        emptyMessage="Nenhum pedido salvo ainda. Compre ou venda TC para aparecer aqui."
+      />
+      {loading && !order && selectedToken && <p class="muted">Carregando pedido…</p>}
+      {order && (
+        <OrderDetail order={order} onRefresh={() => loadOrder(selectedToken)} />
+      )}
     </div>
   );
 }
@@ -414,8 +488,13 @@ export function CoinsPage() {
   const { navigate } = useRouter();
   const params = new URLSearchParams(window.location.search);
   const pedidoToken = params.get('pedido') ?? '';
+  const aba = params.get('aba');
 
-  const [tab, setTab] = useState<Tab>(pedidoToken ? 'track' : 'buy');
+  const [tab, setTab] = useState<Tab>(() => {
+    if (aba === 'historico') return 'history';
+    if (pedidoToken) return 'track';
+    return 'buy';
+  });
   const [packages, setPackages] = useState<CoinPackage[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [loadError, setLoadError] = useState('');
@@ -431,14 +510,22 @@ export function CoinsPage() {
   }, []);
 
   useEffect(() => {
-    if (pedidoToken) setTab('track');
-  }, [pedidoToken]);
+    if (aba === 'historico') setTab('history');
+    else if (pedidoToken) setTab('track');
+  }, [pedidoToken, aba]);
 
   const handleOrderSuccess = (order: CoinOrder) => {
     rememberOrder(order);
     navigate(`/coins?pedido=${encodeURIComponent(order.accessToken)}`);
     setTab('track');
     setSelectedId(null);
+  };
+
+  const goTab = (next: Tab) => {
+    setTab(next);
+    if (next === 'buy' || next === 'sell') navigate('/coins');
+    else if (next === 'history') navigate('/coins?aba=historico');
+    else navigate('/coins');
   };
 
   if (loadError && !packages.length) {
@@ -460,37 +547,24 @@ export function CoinsPage() {
       </p>
 
       <div class="coins-tabs">
-        <button
-          type="button"
-          class={tab === 'buy' ? 'active' : ''}
-          onClick={() => {
-            setTab('buy');
-            navigate('/coins');
-          }}
-        >
+        <button type="button" class={tab === 'buy' ? 'active' : ''} onClick={() => goTab('buy')}>
           Comprar
         </button>
-        <button
-          type="button"
-          class={tab === 'sell' ? 'active' : ''}
-          onClick={() => {
-            setTab('sell');
-            navigate('/coins');
-          }}
-        >
+        <button type="button" class={tab === 'sell' ? 'active' : ''} onClick={() => goTab('sell')}>
           Vender
         </button>
-        <button
-          type="button"
-          class={tab === 'track' ? 'active' : ''}
-          onClick={() => setTab('track')}
-        >
-          Acompanhar pedido
+        <button type="button" class={tab === 'track' ? 'active' : ''} onClick={() => goTab('track')}>
+          Acompanhar
+        </button>
+        <button type="button" class={tab === 'history' ? 'active' : ''} onClick={() => goTab('history')}>
+          Histórico
         </button>
       </div>
 
       {tab === 'track' ? (
         <TrackPanel initialToken={pedidoToken} />
+      ) : tab === 'history' ? (
+        <HistoryPanel initialToken={pedidoToken} />
       ) : (
         <>
           <p class="coins-subtitle">
