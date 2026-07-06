@@ -38,8 +38,8 @@ function writeAll(orders: SavedCoinOrder[]): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(orders.slice(0, MAX_SAVED)));
 }
 
-export function rememberOrder(order: CoinOrder): void {
-  const entry: SavedCoinOrder = {
+function toSavedEntry(order: CoinOrder): SavedCoinOrder {
+  return {
     accessToken: order.accessToken,
     type: order.type,
     characterName: order.characterName,
@@ -48,8 +48,22 @@ export function rememberOrder(order: CoinOrder): void {
     createdAt: order.createdAt,
     status: order.status,
   };
+}
+
+export function rememberOrder(order: CoinOrder): void {
+  const entry = toSavedEntry(order);
   const rest = readAll().filter((o) => o.accessToken !== entry.accessToken);
   writeAll([entry, ...rest]);
+}
+
+/** Atualiza um pedido salvo sem mudar a ordem da lista. */
+export function updateSavedOrder(order: CoinOrder): void {
+  const entry = toSavedEntry(order);
+  const all = readAll();
+  const idx = all.findIndex((o) => o.accessToken === entry.accessToken);
+  if (idx === -1) return;
+  all[idx] = entry;
+  writeAll(all);
 }
 
 export function replaceSavedOrders(orders: SavedCoinOrder[]): void {
