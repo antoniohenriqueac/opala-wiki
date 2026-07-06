@@ -3,7 +3,17 @@ import type { CoinOrder, CoinPackage, CoinStock } from './types';
 /** Env at build time, or Render sibling API (e.g. opala-wiki-1 → opala-wiki). */
 function resolveCoinsApiBase(): string {
   const fromEnv = (import.meta.env.VITE_COINS_API_URL as string | undefined)?.replace(/\/$/, '');
-  if (fromEnv) return fromEnv;
+
+  if (fromEnv && typeof window !== 'undefined') {
+    try {
+      // Build env apontando pro static site (sem API) — ignora e usa fallback
+      if (new URL(fromEnv).hostname !== window.location.hostname) return fromEnv;
+    } catch {
+      return fromEnv;
+    }
+  } else if (fromEnv) {
+    return fromEnv;
+  }
 
   if (typeof window === 'undefined') return '';
 
