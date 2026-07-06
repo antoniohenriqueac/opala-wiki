@@ -1,18 +1,46 @@
 import type { Hunt, Monster, XPCalcSettings } from './types';
 
-/** Each 20 equipment SPEED reduces respawn by 1 second (in-game rule). */
-export const SPEED_POINTS_PER_SEC = 20;
-
-/** @deprecated use SPEED_POINTS_PER_SEC — kept for grep compatibility */
-export const SPEED_COEFF = 1 / SPEED_POINTS_PER_SEC;
-
 /** Orc Fortress baseline at max lure — see docs/lure-pace-samples.json */
 export const DEFAULT_BASE_INTERVAL_SEC = 3.5;
 
 /** Not every lured slot yields a kill each respawn tick (calibrated ~217k Orc Fortress). */
 export const LURE_PARALLEL_FACTOR = 0.69;
 
+export function clampLureTier(hunt: Hunt, lure: number): number {
+  const maxLure = Math.max(1, hunt.maxLure || 1);
+  const minLure = Math.max(1, hunt.minLure || 1);
+  return Math.max(minLure, Math.min(maxLure, lure));
+}
+
+/** Client lure tier T → attracts T to T+1 creatures (e.g. Lure 3 → 3–4). */
+export function lureCreatureInterval(hunt: Hunt, lure: number): { min: number; max: number } {
+  const tier = clampLureTier(hunt, lure);
+  return { min: tier, max: tier + 1 };
+}
+
+/** Max creatures at top lure tier (client "MAX N" badge). */
+export function maxCreaturesForHunt(hunt: Hunt): number {
+  const maxLure = Math.max(1, hunt.maxLure || 1);
+  return lureCreatureInterval(hunt, maxLure).max;
+}
+
+export function lureSelectOptions(hunt: Hunt): { value: number; label: string }[] {
+  const maxLure = Math.max(1, hunt.maxLure || 1);
+  const minLure = Math.max(1, hunt.minLure || 1);
+  const opts: { value: number; label: string }[] = [];
+  for (let tier = minLure; tier <= maxLure; tier++) {
+    const { min, max } = lureCreatureInterval(hunt, tier);
+    opts.push({ value: tier, label: `Lure ${min} a ${max}` });
+  }
+  return opts;
+}
+
 export function estimateRespawnInterval(hunt: Hunt, settings: XPCalcSettings): number {
+  const manual = settings.respawnSec;
+  if (typeof manual === 'number' && manual > 0) {
+    return manual;
+  }
+
   const maxLure = Math.max(1, hunt.maxLure || 1);
   const minLure = Math.max(1, hunt.minLure || 1);
   const lure = Math.max(minLure, Math.min(maxLure, settings.lure ?? maxLure));
@@ -31,33 +59,38 @@ export function estimateRespawnInterval(hunt: Hunt, settings: XPCalcSettings): n
   if (levelRatio < 1) {
     interval *= Math.min(1.35, 1 / levelRatio);
   } else if (levelRatio > 1) {
-    // Over recommended: respawn stops improving (plateau) — in-game ~3.5s Orc Fortress
     const cappedRatio = Math.min(levelRatio, 1.25);
     interval *= Math.max(0.92, 1 / Math.sqrt(cappedRatio));
   }
-
-  const totalSpeed = Math.max(0, settings.totalItemSpeed ?? 0);
-  interval -= totalSpeed / SPEED_POINTS_PER_SEC;
 
   const maxSec = (huntMax ?? baseSlow) * 1.1;
   const absoluteMin = huntMin ?? 1.5;
   return Math.max(absoluteMin, Math.min(maxSec, interval));
 }
 
-/** Seconds removed from respawn for a given SPEED total. */
-export function speedRespawnReductionSec(totalSpeed: number): number {
-  return Math.max(0, totalSpeed) / SPEED_POINTS_PER_SEC;
+export function isManualRespawn(settings: XPCalcSettings): boolean {
+  return typeof settings.respawnSec === 'number' && settings.respawnSec > 0;
+}
+
+/** Effective seconds per kill — wave interval split by creatures × parallel factor. */
+export function respawnPerKillSeconds(
+  respawnInterval: number,
+  creatureCount: number,
+  _manualFromClient = false,
+): number {
+  const n = Math.max(1, creatureCount);
+  return respawnInterval / (n * LURE_PARALLEL_FACTOR);
 }
 
 export function cycleTimeSeconds(
   monsterHp: number,
   partyDps: number,
   respawnInterval: number,
-  lure = 1,
+  creatureCount = 1,
+  manualFromClient = false,
 ): { killTime: number; cycleTime: number; respawnLimited: boolean; respawnPerKill: number } {
   const killTime = monsterHp / Math.max(1, partyDps);
-  const parallel = Math.max(1, lure) * LURE_PARALLEL_FACTOR;
-  const respawnPerKill = respawnInterval / parallel;
+  const respawnPerKill = respawnPerKillSeconds(respawnInterval, creatureCount, manualFromClient);
   const cycleTime = Math.max(killTime, respawnPerKill);
   return { killTime, cycleTime, respawnLimited: respawnPerKill >= killTime * 1.02, respawnPerKill };
 }
@@ -68,8 +101,9 @@ export function cappedDpsForHunt(
   charLevel: number,
   recommendedLevel?: number,
   respawnInterval?: number,
-  lure = 1,
+  creatureCount = 1,
   dmgSharePct = 100,
+  manualFromClient = false,
 ): number {
   if (!monsters.length) return baseDps;
   const maxHp = Math.max(...monsters.map((m) => m.hp));
@@ -80,7 +114,7 @@ export function cappedDpsForHunt(
   }
   if (respawnInterval && charLevel >= rec) {
     const share = Math.max(0.05, Math.min(1, dmgSharePct / 100));
-    const respawnPerKill = respawnInterval / (Math.max(1, lure) * LURE_PARALLEL_FACTOR);
+    const respawnPerKill = respawnPerKillSeconds(respawnInterval, creatureCount, manualFromClient);
     const maxPartyDps = maxHp / respawnPerKill;
     capped = Math.min(capped, maxPartyDps * share);
   }
@@ -93,11 +127,12 @@ export function huntCycleSeconds(
   weights: Record<string, number>,
   partyDps: number,
   respawnInterval: number,
-  lure: number,
+  creatureCount: number,
   charLevel: number,
   recommendedLevel: number,
+  manualFromClient = false,
 ): number {
-  const respawnPerKill = respawnInterval / (Math.max(1, lure) * LURE_PARALLEL_FACTOR);
+  const respawnPerKill = respawnPerKillSeconds(respawnInterval, creatureCount, manualFromClient);
   let totalWeight = 0;
   let weightedKill = 0;
   for (const m of monsters) {

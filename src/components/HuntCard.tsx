@@ -1,6 +1,8 @@
 import type { HuntMetrics } from '../lib/hunt-metrics';
-import { fmtCompact, fmtGpPerHour } from '../lib/format';
+import { fmtGpPerHourRange, fmtXpPerHourFromRaw } from '../lib/format';
+import { XP_DEFAULTS } from '../lib/xp-calculator';
 import { SpriteIcon } from './SpriteIcon';
+import { RespawnTag } from './RespawnTag';
 import { useWiki } from '../context/WikiContext';
 
 interface HuntCardProps {
@@ -10,7 +12,8 @@ interface HuntCardProps {
 
 export function HuntCard({ metrics, onClick }: HuntCardProps) {
   const { data } = useWiki();
-  const { hunt, monsters, xpPerHour, profitPerHour } = metrics;
+  const { hunt, monsters, xpPerHourLow, xpPerHourHigh, profitPerHourLow, profitPerHourHigh } =
+    metrics;
   const firstMon = monsters[0];
 
   return (
@@ -28,8 +31,10 @@ export function HuntCard({ metrics, onClick }: HuntCardProps) {
         )}
       </div>
       <div class="hunt-metrics">
-        <span class="tag xp">{fmtCompact(xpPerHour)} xp/h</span>
-        <span class="tag profit">{fmtGpPerHour(profitPerHour)}</span>
+        <span class="tag xp">
+          {fmtXpPerHourFromRaw(xpPerHourLow, xpPerHourHigh, XP_DEFAULTS.gainRate ?? 120)}
+        </span>
+        <span class="tag profit">{fmtGpPerHourRange(profitPerHourLow, profitPerHourHigh)}</span>
       </div>
       <div class="card-tags">
         {hunt.recommendedLevel != null && (
@@ -38,7 +43,9 @@ export function HuntCard({ metrics, onClick }: HuntCardProps) {
         {hunt.levelMin != null && <span class="tag">min {hunt.levelMin}</span>}
         {hunt.isPremmium && <span class="tag premium">Premium</span>}
         {hunt.maxLure != null && <span class="tag">lure {hunt.maxLure}</span>}
-        {metrics.respawnLimited && <span class="tag respawn-cap">respawn</span>}
+        {metrics.respawnLimited && (
+          <RespawnTag respawnInterval={metrics.respawnInterval} stopClick />
+        )}
       </div>
       <div class="monster-row">
         {monsters.slice(0, 4).map((m) => (

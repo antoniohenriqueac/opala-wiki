@@ -1,7 +1,6 @@
 import { useMemo, useState, useEffect, useCallback } from 'preact/hooks';
 import { SpriteIcon } from '../SpriteIcon';
-import { XPCalculator } from '../XPCalculator';
-import { LootFilter } from '../LootFilter';
+import { HuntCalcWizard } from '../HuntCalcWizard';
 import { HuntMetricsSticky } from '../HuntMetricsSticky';
 import { ItemHoverTip } from '../ItemHoverTip';
 import {
@@ -23,7 +22,8 @@ import {
   saveExcludedLootIds,
   junkItemIds,
 } from '../../lib/loot-filter';
-import { computeXP, loadXPSettings, saveXPSettings } from '../../lib/xp-calculator';
+import { loadXPSettings, saveXPSettings } from '../../lib/xp-calculator';
+import { displayXpRange } from '../../lib/xp-boost';
 import type { Hunt, LootEntry, WikiData, XPCalcSettings } from '../../lib/types';
 import type { WikiIndexes } from '../../lib/indexes';
 import type { DetailTarget } from '../../context/DetailContext';
@@ -51,10 +51,9 @@ export function HuntDetailView({ h, data, indexes, openDetail }: Props) {
     };
   });
 
-  const updateSettings = useCallback(
-    (patch: Partial<XPCalcSettings>) => setXpSettings((s) => ({ ...s, ...patch })),
-    [],
-  );
+  const updateSettings = useCallback((patch: Partial<XPCalcSettings>) => {
+    setXpSettings((s) => ({ ...s, ...patch }));
+  }, []);
 
   useEffect(() => {
     saveExcludedLootIds(h.id, excludedIds);
@@ -69,9 +68,18 @@ export function HuntDetailView({ h, data, indexes, openDetail }: Props) {
     [h, mons, itemById, xpSettings, excludedIds],
   );
 
-  const xpPerHour = useMemo(
-    () => Math.round(computeXP(mons, h, xpSettings).totalXpPerHour),
-    [mons, h, xpSettings],
+  const gainRate = xpSettings.gainRate ?? 120;
+
+  const xpDisplayRange = useMemo(
+    () =>
+      displayXpRange(
+        metrics.xpPerHourLow,
+        metrics.xpPerHourHigh,
+        xpSettings.stamina,
+        gainRate,
+        xpSettings.xpBoost ?? false,
+      ),
+    [metrics.xpPerHourLow, metrics.xpPerHourHigh, xpSettings.stamina, xpSettings.xpBoost, gainRate],
   );
 
   const lootGpPerHour = useMemo(() => {
@@ -136,99 +144,105 @@ export function HuntDetailView({ h, data, indexes, openDetail }: Props) {
   };
 
   return (
-    <>
-      <h1>{h.title}</h1>
-      <div class="sub">
-        Hunt #{h.id}
-        {h.mapId ? ` · map #${h.mapId}` : ''}
-      </div>
-      <div class="lvl-pills">
-        {h.recommendedLevel != null && (
-          <div class="lvl-pill">
-            Level recomendado<b>{h.recommendedLevel}</b>
-          </div>
-        )}
-        {h.levelMin != null && (
-          <div class="lvl-pill">
-            Level mínimo<b>{h.levelMin}</b>
-          </div>
-        )}
-        {h.maxLure != null && (
-          <div class="lvl-pill">
-            Max lure<b>{h.maxLure}</b>
-          </div>
-        )}
+    <div class="hunt-detail-shell">
+      <div class="hunt-detail-scroll">
+        <h1>{h.title}</h1>
+        <div class="sub">
+          Hunt #{h.id}
+          {h.mapId ? ` · map #${h.mapId}` : ''}
+        </div>
+        <div class="lvl-pills">
+          {h.recommendedLevel != null && (
+            <div class="lvl-pill">
+              Level recomendado<b>{h.recommendedLevel}</b>
+            </div>
+          )}
+          {h.levelMin != null && (
+            <div class="lvl-pill">
+              Level mínimo<b>{h.levelMin}</b>
+            </div>
+          )}
+          {h.maxLure != null && (
+            <div class="lvl-pill">
+              Max lure<b>{h.maxLure}</b>
+            </div>
+          )}
+        </div>
+
+        <div class="section-title">
+          <span>Criaturas ({mons.length})</span>
+          <span class="line" />
+        </div>
+        <div class="creature-grid">
+          {mons.map((mn) => (
+            <div
+              class="creature-card"
+              key={mn.id}
+              onClick={() => openDetail({ type: 'monster', data: mn })}
+            >
+              <div class="cname">{mn.name}</div>
+              <SpriteIcon kind="monster" imageName={mn.image} animated assets={data.monAssets} />
+              <div class="csub">
+                HP {fmt(mn.hp)} · XP {fmt(mn.xp)}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <HuntCalcWizard
+          hunt={h}
+          monsters={mons}
+          itemById={itemById}
+          settings={xpSettings}
+          onSettingsChange={updateSettings}
+          lootEntries={lootEntries}
+          excludedIds={excludedIds}
+          onToggleLoot={toggleLoot}
+          onClearLoot={clearFilter}
+          onFilterJunk={filterJunk}
+          lootGpPerHour={lootGpPerHour}
+          goldGpPerHour={Math.round(metrics.profitGoldPerHour)}
+          goldGpPerKill={metrics.goldGpPerKillWiki}
+          invAssets={data.invAssets}
+        />
+
+        <div class="section-title">
+          <span>Loots possíveis</span>
+          <span class="line" />
+          <span>{allLoot.length} itens</span>
+        </div>
+        <div class="loot-groups">
+          {RARITY_BANDS.map((band) => {
+            const rows = groups[band.key];
+            if (!rows.length) return null;
+            return (
+              <div key={band.key}>
+                <div class={`loot-group-head loot-${band.key}`}>
+                  <span>{band.label}</span>
+                  <span>({rows.length})</span>
+                  <span class="lgline" />
+                </div>
+                <div class="slots">{rows.map((d) => renderSlot(d, band.key))}</div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <HuntMetricsSticky
-        xpPerHour={xpPerHour}
+        xpValueLow={xpDisplayRange.low}
+        xpValueHigh={xpDisplayRange.high}
+        baseXpPerHourLow={Math.round(metrics.xpPerHourLow)}
+        baseXpPerHourHigh={Math.round(metrics.xpPerHourHigh)}
+        gainRate={gainRate}
+        xpBoost={xpSettings.xpBoost ?? false}
         metrics={metrics}
+        staminaHours={xpSettings.stamina}
         filteredCount={excludedIds.size}
         totalLootCount={lootEntries.length}
         showProfit={lootEntries.length > 0}
+        respawnManual={(xpSettings.respawnSec ?? 0) > 0}
       />
-
-      <div class="section-title">
-        <span>Criaturas ({mons.length})</span>
-        <span class="line" />
-      </div>
-      <div class="creature-grid">
-        {mons.map((mn) => (
-          <div class="creature-card" key={mn.id} onClick={() => openDetail({ type: 'monster', data: mn })}>
-            <div class="cname">{mn.name}</div>
-            <SpriteIcon kind="monster" imageName={mn.image} animated assets={data.monAssets} />
-            <div class="csub">
-              HP {fmt(mn.hp)} · XP {fmt(mn.xp)}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <XPCalculator
-        hunt={h}
-        monsters={mons}
-        items={data.items}
-        itemById={itemById}
-        settings={xpSettings}
-        onSettingsChange={updateSettings}
-        compactHead
-      />
-
-      {lootEntries.length > 0 && (
-        <LootFilter
-          huntId={h.id}
-          entries={lootEntries}
-          excludedIds={excludedIds}
-          onToggle={toggleLoot}
-          onClear={clearFilter}
-          onFilterJunk={filterJunk}
-          itemById={itemById}
-          invAssets={data.invAssets}
-          lootGpPerHour={lootGpPerHour}
-        />
-      )}
-
-      <div class="section-title">
-        <span>Loots possíveis</span>
-        <span class="line" />
-        <span>{allLoot.length} itens</span>
-      </div>
-      <div class="loot-groups">
-        {RARITY_BANDS.map((band) => {
-          const rows = groups[band.key];
-          if (!rows.length) return null;
-          return (
-            <div key={band.key}>
-              <div class={`loot-group-head loot-${band.key}`}>
-                <span>{band.label}</span>
-                <span>({rows.length})</span>
-                <span class="lgline" />
-              </div>
-              <div class="slots">{rows.map((d) => renderSlot(d, band.key))}</div>
-            </div>
-          );
-        })}
-      </div>
-    </>
+    </div>
   );
 }

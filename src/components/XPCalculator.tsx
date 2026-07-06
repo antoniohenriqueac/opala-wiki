@@ -1,14 +1,10 @@
-import type { Hunt, Monster, XPCalcSettings, Item } from '../lib/types';
-import { computeXP, XP_PRESETS } from '../lib/xp-calculator';
+import type { Hunt, Monster, XPCalcSettings } from '../lib/types';
+import { computeXP, XP_PRESETS, patchPartySize } from '../lib/xp-calculator';
 import { fmt } from '../lib/format';
-import { PartySpeedLoadout } from './PartySpeedLoadout';
-import type { SpeedLoadout } from '../lib/speed-items';
 
 interface XPCalculatorProps {
   hunt: Hunt;
   monsters: Monster[];
-  items: Item[];
-  itemById: Record<number, Item>;
   settings: XPCalcSettings;
   onSettingsChange: (patch: Partial<XPCalcSettings>) => void;
   /** Hide inline total — shown in HuntMetricsSticky instead */
@@ -18,8 +14,6 @@ interface XPCalculatorProps {
 export function XPCalculator({
   hunt,
   monsters,
-  items,
-  itemById,
   settings,
   onSettingsChange,
   compactHead,
@@ -31,10 +25,6 @@ export function XPCalculator({
   const applyPreset = (name: string) => {
     const preset = XP_PRESETS[name];
     if (preset) onSettingsChange(preset);
-  };
-
-  const onSpeedChange = (totalSpeed: number, _loadout: SpeedLoadout) => {
-    onSettingsChange({ totalItemSpeed: totalSpeed });
   };
 
   return (
@@ -53,16 +43,9 @@ export function XPCalculator({
         )}
       </div>
       <div class="xp-warn">
-        Modelo híbrido: max(kill time, respawn). Respawn por hunt (não por mob). 20 SPEED = −1s.
+        Modelo híbrido: max(kill time, respawn). Informe o respawn do client para precisão.
         Mesmo ciclo vale para XP/h e gp/h.
       </div>
-      <PartySpeedLoadout
-        items={items}
-        itemById={itemById}
-        settings={settings}
-        hunt={hunt}
-        onSpeedChange={onSpeedChange}
-      />
       <div class="xp-inputs">
         <div class="xp-input">
           <label>Preset</label>
@@ -93,15 +76,6 @@ export function XPCalculator({
           />
         </div>
         <div class="xp-input">
-          <label>Move speed</label>
-          <input
-            type="number"
-            min={100}
-            value={settings.speed}
-            onInput={(e) => onSettingsChange({ speed: +(e.target as HTMLInputElement).value })}
-          />
-        </div>
-        <div class="xp-input">
           <label>Lure (max {hunt.maxLure || 1})</label>
           <input
             type="number"
@@ -118,7 +92,9 @@ export function XPCalculator({
             min={1}
             max={8}
             value={settings.partySize}
-            onInput={(e) => onSettingsChange({ partySize: +(e.target as HTMLInputElement).value })}
+            onInput={(e) =>
+              onSettingsChange(patchPartySize(+(e.target as HTMLInputElement).value))
+            }
           />
         </div>
         <div class="xp-input">
@@ -129,17 +105,6 @@ export function XPCalculator({
             max={100}
             value={settings.dmgShare}
             onInput={(e) => onSettingsChange({ dmgShare: +(e.target as HTMLInputElement).value })}
-          />
-        </div>
-        <div class="xp-input">
-          <label>Boost</label>
-          <input
-            type="number"
-            min={0.1}
-            max={3}
-            step={0.1}
-            value={settings.boost}
-            onInput={(e) => onSettingsChange({ boost: +(e.target as HTMLInputElement).value })}
           />
         </div>
         <div class="xp-input">

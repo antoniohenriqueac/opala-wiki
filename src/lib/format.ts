@@ -15,9 +15,97 @@ export function fmtGp(n: number): string {
   return `${Math.round(n).toLocaleString('pt-BR')} gp`;
 }
 
+export function fmtGpPerKill(n: number): string {
+  if (n >= 100) return `${Math.round(n)} gp/kill`;
+  return `${n.toFixed(1)} gp/kill`;
+}
+
+export function fmtGpPerKillRange(low: number, high: number): string {
+  return fmtGpPerKill(fmtMid(low, high));
+}
+
 /** e.g. "18k gp/h" */
 export function fmtGpPerHour(n: number): string {
   return `${fmtCompact(n)} gp/h`;
+}
+
+export function fmtXpPerHour(n: number): string {
+  return `${fmtCompact(n)} xp/h`;
+}
+
+export function fmtXpPerHourFromRaw(rawLow: number, rawHigh: number, gainRate: number): string {
+  const mid = fmtMid(rawLow, rawHigh);
+  return fmtXpPerHour(Math.round(mid * gainRate / 100));
+}
+
+export function fmtXpTotalRange(low: number, high: number): string {
+  return Math.round(fmtMid(low, high)).toLocaleString('pt-BR');
+}
+
+export function xpMetricLabel(huntTime?: string): string {
+  if (huntTime) return `XP total (~${huntTime})`;
+  return 'XP total';
+}
+
+export const PREMIUM_XP_HINT =
+  'XP com gain rate premium (120% padrão). Raw xp é o valor base da kill no client.';
+
+export const GP_GROSS_NPC_HINT =
+  'GP bruto estimado (venda NPC wiki), sem supplies — compare com Loot bruto do Analyzer, não Balance.';
+
+/** Stonegy client labels base kill experience as Raw XP. */
+export const RAW_XP_DISCLAIMER =
+  'Raw XP é o valor base do client Stonegy — o que aparece na kill, antes de rate global do servidor.';
+
+export function fmtRawXpPerHour(n: number): string {
+  return `${fmtCompact(n)} raw xp/h`;
+}
+
+export function fmtRawXpTotal(n: number): string {
+  return `${Math.round(n).toLocaleString('pt-BR')} raw xp`;
+}
+
+export function rawXpMetricLabel(huntTime?: string): string {
+  if (huntTime) return `raw xp total (~${huntTime})`;
+  return 'raw xp total';
+}
+
+/** Midpoint of a low/high estimate — used for display (easier to read than "X a Y"). */
+export function fmtMid(low: number, high: number): number {
+  return (low + high) / 2;
+}
+
+export function fmtRange(
+  low: number,
+  high: number,
+  fmtOne: (n: number) => string,
+): string {
+  return fmtOne(fmtMid(low, high));
+}
+
+export function fmtCompactRange(low: number, high: number): string {
+  return fmtCompact(Math.round(fmtMid(low, high)));
+}
+
+export function fmtRawXpPerHourRange(low: number, high: number): string {
+  return `${fmtCompact(Math.round(fmtMid(low, high)))} raw xp/h`;
+}
+
+export function fmtRawXpTotalRange(low: number, high: number): string {
+  return Math.round(fmtMid(low, high)).toLocaleString('pt-BR');
+}
+
+export function fmtRealXpTotalRange(low: number, high: number, gainRate: number): string {
+  const total = Math.round(fmtMid(low, high)).toLocaleString('pt-BR');
+  return gainRate !== 100 ? `${total} (${gainRate}%)` : total;
+}
+
+export function fmtGpTotalRange(low: number, high: number): string {
+  return `${fmtCompact(Math.round(fmtMid(low, high)))} gp`;
+}
+
+export function fmtGpPerHourRange(low: number, high: number): string {
+  return `${fmtCompact(Math.round(fmtMid(low, high)))} gp/h`;
 }
 
 export function escapeHTML(s: string): string {

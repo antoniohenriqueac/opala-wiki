@@ -141,12 +141,16 @@ export interface XPCalcSettings {
   dps: number;
   speed: number;
   boost: number;
-  stamina: number;
+  stamina: number; /** Hunt duration in hours (0–12). Scales totals only; raw xp/h is unchanged. */
+  xpBoost?: boolean; /** +50% raw XP for 1h in the hunt window. */
   partySize: number;
   dmgShare: number;
   lure: number | null;
   charLevel?: number;
-  totalItemSpeed?: number;
+  /** In-game respawn seconds (from client). When set, skips automatic estimate. */
+  respawnSec?: number;
+  /** XP gain rate % (premium/loyalty). Affects displayed "XP real" only, not raw xp/gp. */
+  gainRate?: number;
 }
 
 export interface DropSource {

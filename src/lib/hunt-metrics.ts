@@ -1,6 +1,14 @@
 import type { Hunt, Item, Monster, PartySize, Vocation, XPCalcSettings } from './types';
-import { computeXP, partyDmgShare, XP_DEFAULTS } from './xp-calculator';
-import { cycleTimeSeconds, estimateRespawnInterval, cappedDpsForHunt, huntCycleSeconds } from './respawn-model';
+import { computeXPRange, partyDmgShare, XP_DEFAULTS } from './xp-calculator';
+import {
+  cycleTimeSeconds,
+  estimateRespawnInterval,
+  cappedDpsForHunt,
+  clampLureTier,
+  huntCycleSeconds,
+  isManualRespawn,
+  lureCreatureInterval,
+} from './respawn-model';
 
 export interface HuntMetricsOptions {
   excludedLootIds?: Set<number>;
@@ -10,11 +18,39 @@ export interface HuntMetrics {
   hunt: Hunt;
   monsters: Monster[];
   xpPerHour: number;
+  xpPerHourLow: number;
+  xpPerHourHigh: number;
   profitPerHour: number;
+  profitPerHourLow: number;
+  profitPerHourHigh: number;
   profitPerHourBase: number;
+  profitPerHourBaseLow: number;
+  profitPerHourBaseHigh: number;
+  /** Direct gold coin drops (goldCoins field) — not affected by loot filter. */
+  profitGoldPerHour: number;
+  profitGoldPerHourLow: number;
+  profitGoldPerHourHigh: number;
+  /** Loot items only (wiki EV × NPC), after filter. */
+  profitLootPerHour: number;
+  profitLootPerHourLow: number;
+  profitLootPerHourHigh: number;
+  profitLootPerHourBase: number;
+  profitLootPerHourBaseLow: number;
+  profitLootPerHourBaseHigh: number;
   avgXpPerKill: number;
   respawnInterval: number;
   respawnLimited: boolean;
+  creatureMin: number;
+  creatureMax: number;
+  killsPerHour: number;
+  killsPerHourLow: number;
+  killsPerHourHigh: number;
+  /** Weighted (min+max)/2 from goldCoins — matches gold na BP / kills. */
+  goldGpPerKillWiki: number;
+  /** Loot EV per kill after filter (NPC wiki × chance). */
+  lootGpPerKill: number;
+  /** Loot EV per kill, all drops active. */
+  lootGpPerKillBase: number;
 }
 
 function avgGold(m: Monster): number {
@@ -65,13 +101,15 @@ function buildHuntProfitContext(
   hunt: Hunt,
   monsters: Monster[],
   settings: XPCalcSettings,
+  creatureCount: number,
 ): HuntProfitContext {
   const charLevel = settings.charLevel ?? hunt.recommendedLevel ?? 50;
   const recLevel = hunt.recommendedLevel ?? hunt.levelMin ?? 50;
   const rawDps = Math.max(1, settings.dps);
   const maxLure = Math.max(1, hunt.maxLure || 1);
-  const lure = Math.max(1, Math.min(maxLure, settings.lure ?? maxLure));
+  const lure = clampLureTier(hunt, settings.lure ?? maxLure);
   const respawnInterval = estimateRespawnInterval(hunt, { ...settings, lure, charLevel });
+  const manualRespawn = isManualRespawn(settings);
   const shareInput = Math.max(1, Math.min(100, settings.dmgShare || 100)) / 100;
   const dmgSharePct = Math.round(shareInput * 100);
   const dps = cappedDpsForHunt(
@@ -80,8 +118,9 @@ function buildHuntProfitContext(
     charLevel,
     hunt.recommendedLevel,
     respawnInterval,
-    lure,
+    creatureCount,
     dmgSharePct,
+    manualRespawn,
   );
   const totalPartyDps = dps / Math.max(0.05, shareInput);
   const sharedCycle =
@@ -91,14 +130,15 @@ function buildHuntProfitContext(
           hunt.monsterWeights || {},
           totalPartyDps,
           respawnInterval,
-          lure,
+          creatureCount,
           charLevel,
           recLevel,
+          manualRespawn,
         )
       : null;
   const speedMul = Math.min(1.2, 1 + Math.max(0, settings.speed - 220) / 800);
   const lureMul = Math.min(1.0, 0.68 + lure * 0.05);
-  const boost = Math.max(0.1, settings.boost) * Math.max(0.1, settings.stamina);
+  const boost = Math.max(0.1, settings.boost);
 
   let totalWeight = 0;
   for (const m of monsters) totalWeight += getWeight(hunt, m.id);
@@ -119,7 +159,6 @@ function buildHuntProfitContext(
   };
 }
 
-/** Expected NPC gp/h from one loot item across all hunt monsters (current calc settings). */
 export function computeLootItemProfitPerHour(
   hunt: Hunt,
   monsters: Monster[],
@@ -127,11 +166,14 @@ export function computeLootItemProfitPerHour(
   itemById: Record<number, Item>,
   settings: XPCalcSettings,
 ): number {
+  const maxLure = Math.max(1, hunt.maxLure || 1);
+  const lure = clampLureTier(hunt, settings.lure ?? maxLure);
+  const { max } = lureCreatureInterval(hunt, lure);
   const it = itemById[itemId];
   const price = it?.npcSellPrice ?? 0;
   if (!price) return 0;
 
-  const ctx = buildHuntProfitContext(hunt, monsters, settings);
+  const ctx = buildHuntProfitContext(hunt, monsters, settings, max);
   let profitPerHour = 0;
 
   for (const m of ctx.monsters) {
@@ -143,12 +185,12 @@ export function computeLootItemProfitPerHour(
       m.hp,
       ctx.totalPartyDps,
       ctx.respawnInterval,
-      ctx.lure,
+      max,
+      isManualRespawn(ctx.settings),
     );
     const cycleTime = ctx.sharedCycle ?? perMonsterCycle;
     const kills_h = 3600 / cycleTime;
-    const expectedGp =
-      price * ((drop.chance || 0) / 100) * (drop.maxCount || 1);
+    const expectedGp = price * ((drop.chance || 0) / 100) * (drop.maxCount || 1);
     profitPerHour += kills_h * expectedGp * share * ctx.lureMul * ctx.speedMul * ctx.boost;
   }
 
@@ -168,15 +210,13 @@ export function buildCalcSettings(
   charLevel: number,
   vocation: Vocation = 'ALL',
   hunt?: Hunt,
-  totalItemSpeed = 0,
 ): XPCalcSettings {
   const baseDps = Math.max(20, Math.round(charLevel * 1.2 * (VOCATION_DPS[vocation] || 1)));
   return {
     ...XP_DEFAULTS,
     dps: baseDps,
     charLevel,
-    totalItemSpeed,
-    speed: 220 + Math.min(80, Math.floor(charLevel / 5)),
+    speed: 220,
     partySize,
     dmgShare: partyDmgShare(partySize),
     lure: hunt?.maxLure ?? null,
@@ -188,9 +228,12 @@ function profitForMonsters(
   monsters: Monster[],
   itemById: Record<number, Item>,
   settings: XPCalcSettings,
+  creatureCount: number,
   excludedItemIds?: Set<number>,
+  goldOnly = false,
+  lootOnly = false,
 ): number {
-  const ctx = buildHuntProfitContext(hunt, monsters, settings);
+  const ctx = buildHuntProfitContext(hunt, monsters, settings, creatureCount);
   let profitPerHour = 0;
   for (const m of ctx.monsters) {
     const w = getWeight(ctx.hunt, m.id);
@@ -199,14 +242,73 @@ function profitForMonsters(
       m.hp,
       ctx.totalPartyDps,
       ctx.respawnInterval,
-      ctx.lure,
+      creatureCount,
+      isManualRespawn(ctx.settings),
     );
     const cycleTime = ctx.sharedCycle ?? perMonsterCycle;
     const kills_h = 3600 / cycleTime;
-    const goldPerKill = avgGold(m) + avgLootValuePerKill(m, itemById, excludedItemIds);
+    let goldPerKill = 0;
+    if (!lootOnly) goldPerKill += avgGold(m);
+    if (!goldOnly) goldPerKill += avgLootValuePerKill(m, itemById, excludedItemIds);
     profitPerHour += kills_h * goldPerKill * share * ctx.lureMul * ctx.speedMul * ctx.boost;
   }
   return profitPerHour;
+}
+
+function killsPerHourForCreatures(
+  hunt: Hunt,
+  monsters: Monster[],
+  settings: XPCalcSettings,
+  creatureCount: number,
+): number {
+  const ctx = buildHuntProfitContext(hunt, monsters, settings, creatureCount);
+  let killsPerHour = 0;
+  for (const m of ctx.monsters) {
+    const w = getWeight(ctx.hunt, m.id);
+    const share = w / ctx.totalWeight;
+    const { cycleTime: perMonsterCycle } = cycleTimeSeconds(
+      m.hp,
+      ctx.totalPartyDps,
+      ctx.respawnInterval,
+      creatureCount,
+      isManualRespawn(ctx.settings),
+    );
+    const cycleTime = ctx.sharedCycle ?? perMonsterCycle;
+    killsPerHour += (3600 / cycleTime) * share;
+  }
+  return killsPerHour;
+}
+
+export function weightedWikiGoldPerKill(hunt: Hunt, monsters: Monster[]): number {
+  let totalWeight = 0;
+  let weighted = 0;
+  for (const m of monsters) {
+    const w = getWeight(hunt, m.id);
+    totalWeight += w;
+    weighted += avgGold(m) * w;
+  }
+  if (!totalWeight) totalWeight = monsters.length || 1;
+  return weighted / totalWeight;
+}
+
+function lootGpPerKillForCreatures(
+  hunt: Hunt,
+  monsters: Monster[],
+  itemById: Record<number, Item>,
+  settings: XPCalcSettings,
+  creatureCount: number,
+  excludedItemIds?: Set<number>,
+): number {
+  let totalWeight = 0;
+  let weighted = 0;
+  for (const m of monsters) {
+    const w = getWeight(hunt, m.id);
+    totalWeight += w;
+    weighted += avgLootValuePerKill(m, itemById, excludedItemIds) * w;
+  }
+  if (!totalWeight) totalWeight = monsters.length || 1;
+  const ctx = buildHuntProfitContext(hunt, monsters, settings, creatureCount);
+  return (weighted / totalWeight) * ctx.lureMul * ctx.speedMul * ctx.boost;
 }
 
 export function computeHuntMetrics(
@@ -216,14 +318,53 @@ export function computeHuntMetrics(
   settings: XPCalcSettings,
   options: HuntMetricsOptions = {},
 ): HuntMetrics {
-  const xpResult = computeXP(monsters, hunt, settings);
-  const profitPerHourBase = profitForMonsters(hunt, monsters, itemById, settings);
-  const profitPerHour = profitForMonsters(
+  const xpRange = computeXPRange(monsters, hunt, settings);
+  const maxLure = Math.max(1, hunt.maxLure || 1);
+  const lure = clampLureTier(hunt, settings.lure ?? maxLure);
+  const { min: creatureMin, max: creatureMax } = lureCreatureInterval(hunt, lure);
+
+  const profitBaseLow = profitForMonsters(hunt, monsters, itemById, settings, creatureMin);
+  const profitBaseHigh = profitForMonsters(hunt, monsters, itemById, settings, creatureMax);
+  const profitFilteredLow = profitForMonsters(
     hunt,
     monsters,
     itemById,
     settings,
+    creatureMin,
     options.excludedLootIds,
+  );
+  const profitFilteredHigh = profitForMonsters(
+    hunt,
+    monsters,
+    itemById,
+    settings,
+    creatureMax,
+    options.excludedLootIds,
+  );
+
+  const profitGoldLow = profitForMonsters(hunt, monsters, itemById, settings, creatureMin, undefined, true);
+  const profitGoldHigh = profitForMonsters(hunt, monsters, itemById, settings, creatureMax, undefined, true);
+  const profitLootBaseLow = profitForMonsters(hunt, monsters, itemById, settings, creatureMin, undefined, false, true);
+  const profitLootBaseHigh = profitForMonsters(hunt, monsters, itemById, settings, creatureMax, undefined, false, true);
+  const profitLootFilteredLow = profitForMonsters(
+    hunt,
+    monsters,
+    itemById,
+    settings,
+    creatureMin,
+    options.excludedLootIds,
+    false,
+    true,
+  );
+  const profitLootFilteredHigh = profitForMonsters(
+    hunt,
+    monsters,
+    itemById,
+    settings,
+    creatureMax,
+    options.excludedLootIds,
+    false,
+    true,
   );
 
   let totalWeight = 0;
@@ -236,15 +377,58 @@ export function computeHuntMetrics(
     weightedXp += m.xp * (w / totalWeight);
   }
 
+  const killsLow = killsPerHourForCreatures(hunt, monsters, settings, creatureMin);
+  const killsHigh = killsPerHourForCreatures(hunt, monsters, settings, creatureMax);
+  const killsMid = (killsLow + killsHigh) / 2;
+  const goldGpPerKillWiki = weightedWikiGoldPerKill(hunt, monsters);
+  const lootGpPerKill = lootGpPerKillForCreatures(
+    hunt,
+    monsters,
+    itemById,
+    settings,
+    (creatureMin + creatureMax) / 2,
+    options.excludedLootIds,
+  );
+  const lootGpPerKillBase = lootGpPerKillForCreatures(
+    hunt,
+    monsters,
+    itemById,
+    settings,
+    (creatureMin + creatureMax) / 2,
+  );
+
   return {
     hunt,
     monsters,
-    xpPerHour: xpResult.totalXpPerHour,
-    profitPerHour,
-    profitPerHourBase,
+    xpPerHour: xpRange.xpPerHourMid,
+    xpPerHourLow: xpRange.xpPerHourLow,
+    xpPerHourHigh: xpRange.xpPerHourHigh,
+    profitPerHour: (profitFilteredLow + profitFilteredHigh) / 2,
+    profitPerHourLow: profitFilteredLow,
+    profitPerHourHigh: profitFilteredHigh,
+    profitPerHourBase: (profitBaseLow + profitBaseHigh) / 2,
+    profitPerHourBaseLow: profitBaseLow,
+    profitPerHourBaseHigh: profitBaseHigh,
+    profitGoldPerHour: (profitGoldLow + profitGoldHigh) / 2,
+    profitGoldPerHourLow: profitGoldLow,
+    profitGoldPerHourHigh: profitGoldHigh,
+    profitLootPerHour: (profitLootFilteredLow + profitLootFilteredHigh) / 2,
+    profitLootPerHourLow: profitLootFilteredLow,
+    profitLootPerHourHigh: profitLootFilteredHigh,
+    profitLootPerHourBase: (profitLootBaseLow + profitLootBaseHigh) / 2,
+    profitLootPerHourBaseLow: profitLootBaseLow,
+    profitLootPerHourBaseHigh: profitLootBaseHigh,
     avgXpPerKill: weightedXp,
-    respawnInterval: xpResult.respawnInterval,
-    respawnLimited: xpResult.respawnLimited,
+    respawnInterval: xpRange.high.respawnInterval,
+    respawnLimited: xpRange.high.respawnLimited,
+    creatureMin,
+    creatureMax,
+    killsPerHour: killsMid,
+    killsPerHourLow: killsLow,
+    killsPerHourHigh: killsHigh,
+    goldGpPerKillWiki,
+    lootGpPerKill,
+    lootGpPerKillBase,
   };
 }
 

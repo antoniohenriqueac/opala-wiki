@@ -42,7 +42,11 @@ export function DetailDrawer() {
   return (
     <>
       <div class="drawer-backdrop" onClick={closeDetail} />
-      <div class="drawer" role="dialog" aria-modal="true">
+      <div
+        class={`drawer${detail.type === 'hunt' ? ' drawer-hunt' : ''}`}
+        role="dialog"
+        aria-modal="true"
+      >
         <button type="button" class="drawer-close" onClick={closeDetail} aria-label="Fechar">
           ×
         </button>

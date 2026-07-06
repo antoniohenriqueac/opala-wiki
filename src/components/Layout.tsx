@@ -103,7 +103,7 @@ export function Layout({ url = '/hunts', children }: LayoutProps) {
               stonegy-online.com
             </a>
           </div>
-          <div class="disclaimer">gp/h é estimativa NPC (venda).</div>
+          <div class="disclaimer">gp/h é estimativa NPC (venda). XP sempre em raw xp (Stonegy).</div>
         </div>
       </aside>
       <main class="main">{children}</main>
