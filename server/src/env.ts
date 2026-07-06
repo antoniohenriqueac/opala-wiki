@@ -9,6 +9,7 @@ export const config = {
   defaultStockCoins: Number(env('DEFAULT_STOCK_COINS', '0')),
   mpAccessToken: env('MP_ACCESS_TOKEN'),
   mpWebhookSecret: env('MP_WEBHOOK_SECRET'),
+  mpPayerFallbackEmail: env('MP_PAYER_FALLBACK_EMAIL'),
   mpMock: env('MP_MOCK', 'true') === 'true' || !env('MP_ACCESS_TOKEN'),
   adminPassword: env('ADMIN_PASSWORD', 'admin'),
   jwtSecret: env('JWT_SECRET', 'dev-secret-change-in-production'),

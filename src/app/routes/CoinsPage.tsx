@@ -117,6 +117,10 @@ function OrderForm({
       setError('Informe sua chave PIX.');
       return;
     }
+    if (mode === 'buy' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.trim())) {
+      setError('Para comprar, informe um e-mail válido (exigido pelo Mercado Pago).');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
@@ -145,8 +149,13 @@ function OrderForm({
         <input value={characterName} onInput={(e) => setCharacterName(e.currentTarget.value)} required />
       </label>
       <label class="coins-field">
-        <span>WhatsApp ou e-mail *</span>
-        <input value={contact} onInput={(e) => setContact(e.currentTarget.value)} required />
+        <span>{mode === 'buy' ? 'E-mail *' : 'WhatsApp ou e-mail *'}</span>
+        <input
+          type={mode === 'buy' ? 'email' : 'text'}
+          value={contact}
+          onInput={(e) => setContact(e.currentTarget.value)}
+          required
+        />
       </label>
       {mode === 'sell' && (
         <label class="coins-field">

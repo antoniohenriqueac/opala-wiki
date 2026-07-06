@@ -31,9 +31,11 @@ O schema é criado automaticamente no startup (`initDb`).
 ## Mercado Pago
 
 1. Crie app em [Mercado Pago Developers](https://www.mercadopago.com.br/developers/panel/app)
-2. Copie **Access Token** de produção ou teste para `MP_ACCESS_TOKEN`
+2. Copie **Access Token** para `MP_ACCESS_TOKEN`
 3. Configure webhook: `{PUBLIC_API_URL}/api/webhook/mercadopago`
 4. Com token vazio ou `MP_MOCK=true`, PIX é simulado (dev)
+
+**PIX + credenciais de teste:** o Mercado Pago **não permite** criar cobranças PIX com token de teste (erro 401 code 7). Para PIX real, use **credenciais de produção** (conta verificada + chave PIX cadastrada). Teste local da UI com `MP_MOCK=true`; teste PIX real com valor baixo (ex. R$ 1) e estorno no painel MP.
 
 ## Deploy (Render / Docker)
 

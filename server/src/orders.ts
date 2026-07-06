@@ -144,6 +144,7 @@ export async function createBuyOrder(input: {
     id,
     brl,
     `${pkg.coin_amount} coins — ${input.characterName}`,
+    input.contact,
   );
 
   const row = await insertOrder({
