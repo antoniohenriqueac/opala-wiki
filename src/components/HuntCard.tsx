@@ -43,9 +43,13 @@ export function HuntCard({ metrics, onClick }: HuntCardProps) {
         {hunt.levelMin != null && <span class="tag">min {hunt.levelMin}</span>}
         {hunt.isPremmium && <span class="tag premium">Premium</span>}
         {hunt.maxLure != null && <span class="tag">lure {hunt.maxLure}</span>}
-        {metrics.respawnLimited && (
-          <RespawnTag respawnInterval={metrics.respawnInterval} stopClick />
-        )}
+        <RespawnTag
+          showRange={false}
+          respawnInterval={metrics.respawnInterval}
+          respawnIntervalMin={metrics.respawnIntervalMin}
+          respawnIntervalMax={metrics.respawnIntervalMax}
+          stopClick
+        />
       </div>
       <div class="monster-row">
         {monsters.slice(0, 4).map((m) => (

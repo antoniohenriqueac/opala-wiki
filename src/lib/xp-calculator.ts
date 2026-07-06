@@ -7,6 +7,7 @@ import {
   huntCycleSeconds,
   isManualRespawn,
   lureCreatureInterval,
+  respawnBounds,
 } from './respawn-model';
 import {
   normalizeStaminaHours,
@@ -98,6 +99,7 @@ function computeXPWithCreatures(
   huntMeta: Hunt,
   settings: XPCalcSettings,
   creatureCount: number,
+  respawnIntervalOverride?: number,
 ): XPResult {
   const weights = huntMeta.monsterWeights || {};
   let totalWeight = 0;
@@ -114,7 +116,9 @@ function computeXPWithCreatures(
   const maxLure = Math.max(1, huntMeta.maxLure || 1);
   const lure = clampLureTier(huntMeta, settings.lure ?? maxLure);
   const { min: creatureMin, max: creatureMax } = lureCreatureInterval(huntMeta, lure);
-  const respawnInterval = estimateRespawnInterval(huntMeta, { ...settings, lure, charLevel });
+  const respawnInterval =
+    respawnIntervalOverride ??
+    estimateRespawnInterval(huntMeta, { ...settings, lure, charLevel });
   const manualRespawn = isManualRespawn(settings);
 
   const partySize = Math.max(1, Math.min(8, settings.partySize | 0 || 1));
@@ -213,6 +217,17 @@ function computeXPWithCreatures(
   };
 }
 
+/** Single-point calc at a fixed respawn and creature count (card estimate, breakdown). */
+export function computeXPEstimate(
+  monsters: Monster[],
+  huntMeta: Hunt,
+  settings: XPCalcSettings,
+  respawnSec: number,
+  creatureCount: number,
+): XPResult {
+  return computeXPWithCreatures(monsters, huntMeta, settings, creatureCount, respawnSec);
+}
+
 /** Single-point calc at max creatures in lure interval (breakdown table). */
 export function computeXP(
   monsters: Monster[],
@@ -234,8 +249,9 @@ export function computeXPRange(
   const maxLure = Math.max(1, huntMeta.maxLure || 1);
   const lure = clampLureTier(huntMeta, settings.lure ?? maxLure);
   const { min, max } = lureCreatureInterval(huntMeta, lure);
-  const low = computeXPWithCreatures(monsters, huntMeta, settings, min);
-  const high = computeXPWithCreatures(monsters, huntMeta, settings, max);
+  const bounds = respawnBounds(huntMeta, settings);
+  const low = computeXPWithCreatures(monsters, huntMeta, settings, min, bounds.maxSec);
+  const high = computeXPWithCreatures(monsters, huntMeta, settings, max, bounds.minSec);
   const xpPerHourLow = low.totalXpPerHour;
   const xpPerHourHigh = high.totalXpPerHour;
   const xpPerHourMid = (xpPerHourLow + xpPerHourHigh) / 2;

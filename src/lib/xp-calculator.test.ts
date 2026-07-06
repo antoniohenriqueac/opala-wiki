@@ -28,6 +28,8 @@ import {
   lureCreatureInterval,
   lureSelectOptions,
   maxCreaturesForHunt,
+  respawnBounds,
+  DEFAULT_MAX_INTERVAL_SEC,
 } from './respawn-model.ts';
 import { buildCalcSettings, computeHuntMetrics, huntMonsters } from './hunt-metrics.ts';
 import type { Hunt, Monster } from './types.ts';
@@ -137,6 +139,60 @@ describe('gain rate', () => {
     assert.equal(real.high, 144_000);
     const boosted = displayRealXpRange(rawLow, rawHigh, 1, true, 120);
     assert.equal(boosted.low, 170_000);
+  });
+});
+
+describe('respawn bounds', () => {
+  it('Tarantula lvl 64 lure 3 → ~3,2–11s faixa (defaults 3,5–12)', () => {
+    const hunt: Hunt = {
+      id: 10,
+      title: 'Tiquanda Tarantula Cave',
+      monsters: [1],
+      maxLure: 3,
+      recommendedLevel: 20,
+    };
+    const bounds = respawnBounds(hunt, {
+      ...XP_DEFAULTS,
+      lure: 3,
+      charLevel: 64,
+    });
+    assert.ok(bounds.minSec >= 3.0 && bounds.minSec <= 3.5, `min ${bounds.minSec}`);
+    assert.ok(bounds.maxSec >= 10 && bounds.maxSec <= 12, `max ${bounds.maxSec}`);
+    assert.ok(bounds.maxSec > bounds.minSec);
+    assert.equal(DEFAULT_MAX_INTERVAL_SEC, 12);
+  });
+
+  it('manual respawn collapses range to single value', () => {
+    const hunt: Hunt = { id: 1, title: 'x', monsters: [1], maxLure: 3 };
+    const bounds = respawnBounds(hunt, { ...XP_DEFAULTS, respawnSec: 7, lure: 3 });
+    assert.equal(bounds.minSec, 7);
+    assert.equal(bounds.maxSec, 7);
+    assert.equal(bounds.currentSec, 7);
+    assert.equal(bounds.manual, true);
+  });
+
+  it('card preview uses avg respawn ~7–8s for Tarantula (not fast ~3,2s)', () => {
+    const tarantula: Monster = {
+      id: 1,
+      name: 'Tarantula',
+      image: 'x',
+      hp: 225,
+      xp: 120,
+      goldCoins: { min: 0, max: 40 },
+    };
+    const hunt: Hunt = {
+      id: 10,
+      title: 'Tiquanda Tarantula Cave',
+      monsters: [1],
+      maxLure: 3,
+      recommendedLevel: 20,
+    };
+    const settings = { ...XP_DEFAULTS, lure: 3, charLevel: 50, dps: 60 };
+    const card = computeHuntMetrics(hunt, [tarantula], {}, settings, { cardPreview: true });
+    const full = computeHuntMetrics(hunt, [tarantula], {}, settings);
+    assert.ok(card.respawnInterval >= 7 && card.respawnInterval <= 8.5, `avg ${card.respawnInterval}`);
+    assert.ok(card.xpPerHour < full.xpPerHourHigh, 'card xp below optimistic fast respawn');
+    assert.ok(card.xpPerHour > full.xpPerHourLow * 0.85, 'card xp above pessimistic floor');
   });
 });
 

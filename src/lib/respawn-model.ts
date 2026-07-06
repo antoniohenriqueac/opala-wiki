@@ -3,8 +3,57 @@ import type { Hunt, Monster, XPCalcSettings } from './types';
 /** Orc Fortress baseline at max lure — see docs/lure-pace-samples.json */
 export const DEFAULT_BASE_INTERVAL_SEC = 3.5;
 
+/** Default slow respawn when hunt has no lurePace.maxSeconds (min lure / worst case). */
+export const DEFAULT_MAX_INTERVAL_SEC = 12;
+
 /** Not every lured slot yields a kill each respawn tick (calibrated ~217k Orc Fortress). */
 export const LURE_PARALLEL_FACTOR = 0.69;
+
+export interface RespawnBounds {
+  minSec: number;
+  maxSec: number;
+  currentSec: number;
+  manual: boolean;
+}
+
+function applyRespawnLevelScale(interval: number, hunt: Hunt, charLevel: number): number {
+  const recLevel = Math.max(1, hunt.recommendedLevel ?? hunt.levelMin ?? 1);
+  const level = Math.max(1, charLevel);
+  const levelRatio = level / recLevel;
+  if (levelRatio < 1) {
+    return interval * Math.min(1.35, 1 / levelRatio);
+  }
+  if (levelRatio > 1) {
+    const cappedRatio = Math.min(levelRatio, 1.25);
+    return interval * Math.max(0.92, 1 / Math.sqrt(cappedRatio));
+  }
+  return interval;
+}
+
+/** Hunt respawn window: fast (minSec) at max lure → slow (maxSec) at min lure, or manual single value. */
+export function respawnBounds(hunt: Hunt, settings: XPCalcSettings): RespawnBounds {
+  const manual = settings.respawnSec;
+  if (typeof manual === 'number' && manual > 0) {
+    return { minSec: manual, maxSec: manual, currentSec: manual, manual: true };
+  }
+
+  const charLevel = settings.charLevel ?? hunt.recommendedLevel ?? 50;
+  const huntMin = hunt.minRespawnSec ?? DEFAULT_BASE_INTERVAL_SEC;
+  const huntMax = hunt.maxRespawnSec ?? DEFAULT_MAX_INTERVAL_SEC;
+  const minSec = applyRespawnLevelScale(Math.min(huntMin, huntMax), hunt, charLevel);
+  const maxSec = applyRespawnLevelScale(Math.max(huntMin, huntMax), hunt, charLevel);
+  const maxLure = Math.max(1, hunt.maxLure || 1);
+  const lure = clampLureTier(hunt, settings.lure ?? maxLure);
+  const currentSec = estimateRespawnInterval(hunt, { ...settings, lure, charLevel, respawnSec: undefined });
+
+  return { minSec, maxSec, currentSec, manual: false };
+}
+
+/** Typical respawn for Hunt Finder cards — midpoint of the hunt window (e.g. ~8s on 3,5–12). */
+export function respawnAverageSec(bounds: RespawnBounds): number {
+  if (bounds.manual) return bounds.currentSec;
+  return (bounds.minSec + bounds.maxSec) / 2;
+}
 
 export function clampLureTier(hunt: Hunt, lure: number): number {
   const maxLure = Math.max(1, hunt.maxLure || 1);
@@ -49,19 +98,13 @@ export function estimateRespawnInterval(hunt: Hunt, settings: XPCalcSettings): n
   const lureT = (lure - minLure) / lureSpan;
   const huntMin = hunt.minRespawnSec;
   const huntMax = hunt.maxRespawnSec;
-  const baseSlow = huntMax ?? 5.0;
+  const baseSlow = huntMax ?? DEFAULT_MAX_INTERVAL_SEC;
   const baseFast = huntMin ?? DEFAULT_BASE_INTERVAL_SEC;
   let interval = baseSlow - lureT * (baseSlow - baseFast);
 
   const recLevel = Math.max(1, hunt.recommendedLevel ?? hunt.levelMin ?? 1);
   const charLevel = Math.max(1, settings.charLevel ?? recLevel);
-  const levelRatio = charLevel / recLevel;
-  if (levelRatio < 1) {
-    interval *= Math.min(1.35, 1 / levelRatio);
-  } else if (levelRatio > 1) {
-    const cappedRatio = Math.min(levelRatio, 1.25);
-    interval *= Math.max(0.92, 1 / Math.sqrt(cappedRatio));
-  }
+  interval = applyRespawnLevelScale(interval, hunt, charLevel);
 
   const maxSec = (huntMax ?? baseSlow) * 1.1;
   const absoluteMin = huntMin ?? 1.5;

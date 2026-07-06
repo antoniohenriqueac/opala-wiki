@@ -24,6 +24,17 @@ export function fmtGpPerKillRange(low: number, high: number): string {
   return fmtGpPerKill(fmtMid(low, high));
 }
 
+export function fmtRespawnSec(n: number): string {
+  return n.toFixed(1).replace('.', ',');
+}
+
+export function fmtRespawnRange(minSec: number, maxSec: number): string {
+  if (Math.abs(minSec - maxSec) < 0.05) return `${fmtRespawnSec(minSec)}s`;
+  const lo = Math.min(minSec, maxSec);
+  const hi = Math.max(minSec, maxSec);
+  return `${fmtRespawnSec(lo)}–${fmtRespawnSec(hi)}s`;
+}
+
 /** e.g. "18k gp/h" */
 export function fmtGpPerHour(n: number): string {
   return `${fmtCompact(n)} gp/h`;

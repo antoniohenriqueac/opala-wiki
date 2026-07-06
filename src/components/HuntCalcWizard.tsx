@@ -2,13 +2,14 @@ import { useEffect, useMemo, useState } from 'preact/hooks';
 import type { Hunt, Monster, XPCalcSettings, Item, SpriteAsset } from '../lib/types';
 import { computeXP, computeXPRange, XP_PRESETS, partyDmgShare, patchPartySize } from '../lib/xp-calculator';
 import {
-  estimateRespawnInterval,
   lureCreatureInterval,
   lureSelectOptions,
   maxCreaturesForHunt,
   clampLureTier,
+  respawnBounds,
 } from '../lib/respawn-model';
-import { fmt } from '../lib/format';
+import { fmt, fmtRespawnSec } from '../lib/format';
+import { withBase } from '../lib/paths';
 import { LootFilter, type LootFilterEntry } from './LootFilter';
 import { HuntCalcStepper } from './HuntCalcStepper';
 import { RespawnTag } from './RespawnTag';
@@ -52,7 +53,8 @@ export function HuntCalcWizard({
   invAssets,
 }: HuntCalcWizardProps) {
   const steps = useMemo(() => {
-    const s = [{ id: 'char', label: 'Personagem' }];
+    const s = [{ id: 'respawn', label: 'Respawn' }];
+    s.push({ id: 'char', label: 'Personagem' });
     if (lootEntries.length > 0) s.push({ id: 'loot', label: 'Loot filter' });
     s.push({ id: 'results', label: 'Detalhes' });
     return s;
@@ -65,11 +67,11 @@ export function HuntCalcWizard({
     } catch {
       /* ignore */
     }
-    return 'char';
+    return 'respawn';
   });
 
   useEffect(() => {
-    if (!steps.some((s) => s.id === activeStep)) setActiveStep('char');
+    if (!steps.some((s) => s.id === activeStep)) setActiveStep('respawn');
   }, [steps, activeStep]);
 
   useEffect(() => {
@@ -88,14 +90,13 @@ export function HuntCalcWizard({
   const lureOptions = lureSelectOptions(hunt);
   const maxCreatures = maxCreaturesForHunt(hunt);
   const creatureInterval = lureCreatureInterval(hunt, lureVal);
-  const estimatedRespawn = estimateRespawnInterval(hunt, {
-    ...settings,
-    lure: lureVal,
-    respawnSec: undefined,
-  });
+  const respawn = respawnBounds(hunt, settings);
   const stepIdx = steps.findIndex((s) => s.id === activeStep);
   const canPrev = stepIdx > 0;
   const canNext = stepIdx < steps.length - 1;
+  const manualRespawn = respawn.manual;
+  const respawnReady = manualRespawn;
+  const respawnBlocked = activeStep === 'respawn' && !respawnReady;
 
   const applyPreset = (name: string) => {
     const preset = XP_PRESETS[name];
@@ -108,23 +109,75 @@ export function HuntCalcWizard({
         <div class="hunt-calc-wizard-title">
           Calculadora de hunt
           <span class="beta-tag">BETA</span>
-          {result.respawnLimited && (
-            <RespawnTag respawnInterval={result.respawnInterval} />
-          )}
         </div>
         <p class="hunt-calc-wizard-sub muted">
-          Ajuste personagem, respawn e loot — raw xp/h e gp/h atualizam no rodapé.
+          Respawn define o ciclo da hunt — configure primeiro, depois personagem e loot.
         </p>
       </div>
 
       <HuntCalcStepper steps={steps} active={activeStep} onSelect={setActiveStep} />
 
       <div class="hunt-calc-step-panel">
+        {activeStep === 'respawn' && (
+          <div class="hunt-calc-step-content hunt-calc-respawn-step">
+            <div class="step-intro">
+              <h3>Tempo de respawn</h3>
+              <p class="muted">
+                É o valor que mais impacta raw xp/h e gp/h. Use o número exato que aparece no client Stonegy.
+              </p>
+            </div>
+            <div class="respawn-guide">
+              <ol class="respawn-guide-steps">
+                <li>
+                  No client, olhe o <strong>topo central</strong> da tela (ícone de criatura / estrela).
+                </li>
+                <li>Passe o mouse em cima do ícone.</li>
+                <li>
+                  No tooltip <strong>Velocidade de respawn</strong>, copie o{' '}
+                  <strong>Tempo de respawn</strong> (ex.: 12s).
+                </li>
+              </ol>
+              <figure class="respawn-guide-figure">
+                <img
+                  src={withBase('images/respawn-tooltip-example.png')}
+                  alt="Tooltip Velocidade de respawn no client Stonegy mostrando Tempo de respawn: 12s"
+                  loading="lazy"
+                  width={420}
+                  height={240}
+                />
+                <figcaption class="muted">Passe o mouse no ícone do topo — copie o tempo em segundos.</figcaption>
+              </figure>
+            </div>
+            <div class="xp-inputs respawn-inputs">
+              <div class="xp-input xp-input-respawn-primary">
+                <CalcFieldLabel label="Tempo de respawn (s)" hintKey="respawn" />
+                <input
+                  type="number"
+                  min={0}
+                  step={0.1}
+                  class="respawn-primary-input"
+                  placeholder="ex. 12"
+                  value={settings.respawnSec ?? ''}
+                  onInput={(e) => {
+                    const v = (e.target as HTMLInputElement).value;
+                    onSettingsChange({ respawnSec: v === '' ? undefined : +v });
+                  }}
+                />
+                <span class="field-sync-note muted">
+                  {manualRespawn
+                    ? `Usando ${fmtRespawnSec(settings.respawnSec!)}s do client.`
+                    : 'Digite o tempo que você vê no tooltip para continuar.'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {activeStep === 'char' && (
           <div class="hunt-calc-step-content">
             <div class="step-intro">
               <h3>Seu personagem</h3>
-              <p class="muted">Level, DPS, party, lure e respawn desta hunt.</p>
+              <p class="muted">Level, DPS, party e lure — respawn vem do passo anterior.</p>
             </div>
             <div class="xp-inputs">
               <div class="xp-input">
@@ -175,20 +228,6 @@ export function HuntCalcWizard({
                   Intervalo: {creatureInterval.min} a {creatureInterval.max} criaturas · MAX{' '}
                   {maxCreatures}
                 </span>
-              </div>
-              <div class="xp-input">
-                <CalcFieldLabel label="Respawn (s)" hintKey="respawn" />
-                <input
-                  type="number"
-                  min={0}
-                  step={0.1}
-                  placeholder={`est. ${estimatedRespawn.toFixed(1)}`}
-                  value={settings.respawnSec ?? ''}
-                  onInput={(e) => {
-                    const v = (e.target as HTMLInputElement).value;
-                    onSettingsChange({ respawnSec: v === '' ? undefined : +v });
-                  }}
-                />
               </div>
               <div class="xp-input">
                 <CalcFieldLabel label="XP gain rate %" hintKey="gainRate" />
@@ -283,12 +322,8 @@ export function HuntCalcWizard({
             <div class="step-intro">
               <h3>Breakdown</h3>
               <p class="muted">
-                Respawn ~{result.respawnInterval.toFixed(1)}s · {result.creatureMin}–
-                {result.creatureMax} criaturas/tick · Party DPS {Math.round(result.totalPartyDps)}
-              </p>
-              <p class="muted step-note">
-                Tabela usa cenário otimista ({result.creatureMax} criaturas). Rodapé usa média entre{' '}
-                {result.creatureMin} e {result.creatureMax}.
+                Respawn {fmtRespawnSec(respawn.currentSec)}s · {result.creatureMin}–{result.creatureMax}{' '}
+                criaturas · Party DPS {Math.round(result.totalPartyDps)}
               </p>
             </div>
             <table class="xp-table">
@@ -306,7 +341,11 @@ export function HuntCalcWizard({
                     <td>
                       {r.name}
                       {r.respawnLimited && (
-                        <RespawnTag compact respawnInterval={result.respawnInterval} />
+                        <RespawnTag
+                          compact
+                          showRange={false}
+                          respawnInterval={respawn.currentSec}
+                        />
                       )}
                     </td>
                     <td>{fmt(Math.round(r.xph_hunt))}</td>
@@ -335,8 +374,8 @@ export function HuntCalcWizard({
         <button
           type="button"
           class="chip chip-primary"
-          disabled={!canNext}
-          onClick={() => canNext && setActiveStep(steps[stepIdx + 1].id)}
+          disabled={!canNext || respawnBlocked}
+          onClick={() => canNext && !respawnBlocked && setActiveStep(steps[stepIdx + 1].id)}
         >
           Próximo →
         </button>

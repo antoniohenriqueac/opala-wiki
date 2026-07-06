@@ -52,7 +52,9 @@ export function HuntsPage(_props: { path?: string }) {
       .map((h) => {
         const monsters = huntMonsters(h, indexes.monById);
         const huntSettings = { ...settings, lure: h.maxLure ?? settings.lure };
-        return computeHuntMetrics(h, monsters, indexes.itemById, huntSettings);
+        return computeHuntMetrics(h, monsters, indexes.itemById, huntSettings, {
+          cardPreview: true,
+        });
       })
       .filter(
         (m) =>

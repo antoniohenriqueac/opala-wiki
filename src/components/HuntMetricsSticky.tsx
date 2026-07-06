@@ -5,6 +5,7 @@ import {
   fmtGpPerKill,
   fmtGpTotalRange,
   fmtMid,
+  fmtRespawnSec,
   fmtXpPerHourFromRaw,
   fmtXpTotalRange,
   xpMetricLabel,
@@ -41,6 +42,7 @@ function gpFilteredHint(
   lootHigh: number,
   active: number,
   totalLootCount: number,
+  respawnManual: boolean,
 ): InfoHoverContent {
   const kills = Math.round(metrics.killsPerHour);
   const paragraphs = [
@@ -49,7 +51,7 @@ function gpFilteredHint(
     active > 0
       ? `Loot itens: ${fmtGpPerKill(metrics.lootGpPerKill)} → ${fmtGpPerHourRange(lootLow, lootHigh)} (${active}/${totalLootCount} ativos).`
       : `Loot itens: 0 gp/h — todos os ${totalLootCount} itens filtrados. GP = só gold da kill.`,
-    `~${kills.toLocaleString('pt-BR')} kills/h · criaturas ${metrics.creatureMin}–${metrics.creatureMax} · respawn ~${metrics.respawnInterval.toFixed(1)}s.`,
+    `~${kills.toLocaleString('pt-BR')} kills/h · criaturas ${metrics.creatureMin}–${metrics.creatureMax} · respawn ${fmtRespawnSec(metrics.respawnInterval)}s${respawnManual ? '' : ' (est.)'}.`,
   ];
   return {
     title: 'GP bruto NPC (filtro)',
@@ -145,7 +147,7 @@ export function HuntMetricsSticky({
             <span class="tag raw-xp-tag">{premiumTag}</span>
             {boostOn && <span class="tag xp-boost-tag">xp boost</span>}
             {metrics.respawnLimited && (
-              <RespawnTag respawnInterval={metrics.respawnInterval} />
+              <RespawnTag showRange={false} respawnInterval={metrics.respawnInterval} />
             )}
           </div>
         </div>
@@ -164,6 +166,7 @@ export function HuntMetricsSticky({
                   lootFilteredHigh,
                   active,
                   totalLootCount,
+                  respawnManual,
                 )}
               >
                 <span class="hunt-sticky-lbl hunt-sticky-lbl-tip">
@@ -196,7 +199,9 @@ export function HuntMetricsSticky({
         raw {fmtCompact(Math.round(fmtMid(baseXpPerHourLow, baseXpPerHourHigh)))} xp/h
         {' · '}
         {metrics.creatureMin}–{metrics.creatureMax} cri
-        {respawnManual ? ' · respawn manual' : ` · ~${metrics.respawnInterval.toFixed(1)}s`}
+        {' · '}
+        respawn {fmtRespawnSec(metrics.respawnInterval)}s
+        {respawnManual ? ' (client)' : ' (est.)'}
         {showProfit && (
           <>
             {' · '}

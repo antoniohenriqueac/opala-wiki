@@ -52,11 +52,11 @@ export const CALC_FIELD_HINTS: Record<string, InfoHoverContent> = {
     ],
   },
   respawn: {
-    title: 'Respawn (s)',
+    title: 'Tempo de respawn (s)',
     paragraphs: [
-      'Tempo de respawn mostrado no client Stonegy (ex.: 7s na hunt). Quando preenchido, usa esse valor direto.',
-      'Recomendado informar o valor real do jogo para resultados precisos.',
-      'Vazio = estimativa automática por lure e level.',
+      'Valor do tooltip Velocidade de respawn no client Stonegy — fator #1 de raw xp/h e gp/h.',
+      'Topo central da tela → passe o mouse no ícone → copie Tempo de respawn (ex.: 12s).',
+      'O tempo muda com level, speed e dificuldade da hunt; use o valor da sua sessão atual.',
     ],
   },
   gainRate: {
