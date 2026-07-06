@@ -1,6 +1,6 @@
 {
-  "lastUpdated": "2026-07-05T18:10:00.448Z",
-  "source": "codexloot-seed",
+  "lastUpdated": "2026-07-06T10:26:42.350Z",
+  "source": "stonegy-extract",
   "counts": {
     "items": 1427,
     "monsters": 364,
@@ -8,6 +8,6 @@
     "quests": 12
   },
   "hashes": {
-    "wiki_data": "seed"
+    "wiki_data": "5820c406f5fda1e55a9aa5ed8e7e6e42a64955c29bff37c84de0309bf992ced3"
   }
 }
