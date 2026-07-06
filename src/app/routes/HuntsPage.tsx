@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'preact/hooks';
 import { useWiki } from '../../context/WikiContext';
 import { useDetail } from '../../context/DetailContext';
+import { PageHeader } from '../../components/PageHeader';
 import { HuntFilters, type HuntFilterState } from '../../components/HuntFilters';
 import { HuntCard } from '../../components/HuntCard';
-import { SearchBar } from '../../components/SearchBar';
 import {
   buildCalcSettings,
   computeHuntMetrics,
@@ -76,11 +76,14 @@ export function HuntsPage(_props: { path?: string }) {
 
   return (
     <>
-      <header class="page-header">
-        <h1>Hunt Finder</h1>
-        <p>Encontre as melhores hunts para o seu personagem — raw xp/h e gp/h estimado.</p>
-      </header>
-      <SearchBar value={filters.query} onInput={(q) => patch({ query: q })} placeholder="Buscar hunt ou criatura…" />
+      <PageHeader
+        title="Hunt Finder"
+        description="Encontre as melhores hunts para o seu personagem — raw xp/h e gp/h estimado."
+        searchValue={filters.query}
+        onSearch={(q) => patch({ query: q })}
+        searchInputId="hunt-search"
+        searchPlaceholder="Hunt ou criatura…"
+      />
       <HuntFilters state={filters} onChange={patch} />
       <div class="stats-bar">
         <span>

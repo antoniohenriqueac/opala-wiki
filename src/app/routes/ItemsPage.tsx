@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'preact/hooks';
 import { useWiki } from '../../context/WikiContext';
 import { useDetail } from '../../context/DetailContext';
-import { SearchBar } from '../../components/SearchBar';
+import { PageHeader } from '../../components/PageHeader';
 import { SpriteIcon } from '../../components/SpriteIcon';
 import { ItemHoverTip } from '../../components/ItemHoverTip';
 import { ClearFiltersButton, StatsBar } from '../../components/FilterHelpers';
@@ -91,15 +91,15 @@ export function ItemsPage(_props: { path?: string }) {
 
   return (
     <>
-      <header class="page-header">
-        <h1>Itens</h1>
-        <p>
-          {data.items.length} itens — armas, armaduras, consumíveis. Veja stats, proteções e quem
-          dropa cada item.
-        </p>
-      </header>
+      <PageHeader
+        title="Itens"
+        description={`${data.items.length} itens — armas, armaduras, consumíveis. Veja stats, proteções e quem dropa cada item.`}
+        searchValue={query}
+        onSearch={setQuery}
+        searchInputId="items-search"
+        searchPlaceholder="Nome do item… (kina = Knight)"
+      />
       <div class="filter-panel panel">
-        <SearchBar value={query} onInput={setQuery} placeholder="Buscar item… (kina = Knight)" />
         <div class="field level-range-field">
           <label>Level req.</label>
           <div class="level-range-inputs">

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'preact/hooks';
 import { useWiki } from '../../context/WikiContext';
 import { useDetail } from '../../context/DetailContext';
-import { SearchBar } from '../../components/SearchBar';
+import { PageHeader } from '../../components/PageHeader';
 import { SpriteIcon } from '../../components/SpriteIcon';
 import { ClearFiltersButton, StatsBar } from '../../components/FilterHelpers';
 import { matchQuery, questTypeSummary, MISSION_TYPE_LABEL, getQuestIconItemId } from '../../lib/format';
@@ -54,15 +54,15 @@ export function QuestsPage(_props: { path?: string }) {
 
   return (
     <>
-      <header class="page-header">
-        <h1>Missões</h1>
-        <p>
-          {(data.quests || []).length} missões — objetivos, salas, waves, recompensas e monstros
-          envolvidos.
-        </p>
-      </header>
+      <PageHeader
+        title="Missões"
+        description={`${(data.quests || []).length} missões — objetivos, salas, waves, recompensas e monstros envolvidos.`}
+        searchValue={query}
+        onSearch={setQuery}
+        searchInputId="quests-search"
+        searchPlaceholder="Nome da missão…"
+      />
       <div class="filter-panel panel">
-        <SearchBar value={query} onInput={setQuery} placeholder="Buscar missão…" />
         <div class="field">
           <label>Acesso</label>
           <div class="chip-group">

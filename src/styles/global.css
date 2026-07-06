@@ -178,7 +178,51 @@ button {
 }
 
 .page-header {
-  margin-bottom: 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  margin: -1.5rem -2rem 1.25rem;
+  padding: 1.15rem 2rem 1rem;
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    margin: -1rem -1rem 1rem;
+    padding: 0.85rem 1rem 0.75rem;
+  }
+}
+
+.page-header-inner {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  flex-wrap: wrap;
+}
+
+.page-header-text {
+  flex: 1 1 10rem;
+  min-width: 0;
+}
+
+.page-header-search {
+  flex: 1 1 16rem;
+  max-width: min(100%, 26rem);
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .page-header-inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-header-search {
+    max-width: none;
+  }
 }
 
 .page-header h1 {
@@ -277,6 +321,10 @@ button {
   min-width: 200px;
 }
 
+.search-bar-field {
+  position: relative;
+}
+
 .search-bar input {
   width: 100%;
   background: var(--bg-muted);
@@ -285,13 +333,68 @@ button {
   padding: 0.6rem 0.85rem 0.6rem 2.25rem;
 }
 
-.search-bar::before {
+.search-bar-field::before {
   content: '⌕';
   position: absolute;
   left: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-dim);
+  pointer-events: none;
+  z-index: 1;
+  line-height: 1;
+}
+
+.search-bar-header {
+  min-width: 0;
+  flex: none;
+}
+
+.search-bar-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gold);
+  margin-bottom: 0.35rem;
+}
+
+.search-bar-header .search-bar-field::before {
+  font-size: 1.05rem;
+  left: 0.85rem;
+  color: var(--gold);
+  opacity: 0.85;
+}
+
+.search-bar-header input {
+  padding: 0.72rem 2.25rem 0.72rem 2.5rem;
+  font-size: 0.95rem;
+  border-color: var(--border-strong);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.search-bar-header input:focus {
+  border-color: var(--gold);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--gold-glow);
+}
+
+.search-bar-kbd {
+  position: absolute;
+  right: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.68rem;
+  font-family: var(--font-ui);
+  padding: 0.12rem 0.4rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-muted);
+  color: var(--text-dim);
+  pointer-events: none;
+  line-height: 1.2;
 }
 
 .stats-bar {
