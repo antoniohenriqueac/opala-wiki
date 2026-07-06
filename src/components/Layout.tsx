@@ -6,13 +6,13 @@ import { isModifiedClick, useRouter } from '../context/RouterContext';
 const DONATE_PIX_URL =
   'https://nubank.com.br/cobrar/5hux2/6a4aa55b-32b6-44ca-a71f-85d7fc5ef765';
 
-const NAV: Array<{ href: string; label: string; icon?: string; iconSrc?: string }> = [
+const NAV: Array<{ href: string; label: string; icon?: string; iconSrc?: string; badge?: string }> = [
   { href: '/hunts', label: 'Hunt Finder', icon: '⚔' },
   { href: '/bestiary', label: 'Bestiário', icon: '👹' },
   { href: '/items', label: 'Itens', icon: '🗡' },
   { href: '/quests', label: 'Missões', icon: '📜' },
   { href: '/exp-share', label: 'Exp Share', icon: '⚡' },
-  { href: '/coins', label: 'Compre/Venda TC', iconSrc: 'tc-coin.png' },
+  { href: '/coins', label: 'Compre/Venda TC', iconSrc: 'tc-coin.png', badge: 'BETA' },
 ];
 
 interface LayoutProps {
@@ -85,7 +85,10 @@ export function Layout({ url = '/hunts', children }: LayoutProps) {
                   item.icon
                 )}
               </span>
-              {item.label}
+              <span class="nav-link-text">
+                {item.label}
+                {item.badge && <span class="nav-link-badge">{item.badge}</span>}
+              </span>
             </a>
           ))}
         </nav>
