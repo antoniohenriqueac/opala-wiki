@@ -13,10 +13,10 @@ import {
   orderTrackUrl,
 } from '../../lib/coins-api';
 import {
-  getLastOrderToken,
   getSavedOrders,
   rememberOrder,
   replaceSavedOrders,
+  updateSavedOrder,
   type SavedCoinOrder,
 } from '../../lib/coins-order-storage';
 
@@ -352,7 +352,8 @@ async function refreshSavedStatuses(orders: SavedCoinOrder[]): Promise<SavedCoin
 
 function TrackPanel({ initialToken }: { initialToken: string }) {
   const { navigate } = useRouter();
-  const [token, setToken] = useState(initialToken || getLastOrderToken() || '');
+  const [token, setToken] = useState(initialToken || '');
+  const [activeToken, setActiveToken] = useState(initialToken || '');
   const [order, setOrder] = useState<CoinOrder | null>(null);
   const [error, setError] = useState('');
   const [highlightTracking, setHighlightTracking] = useState(Boolean(initialToken));
@@ -372,21 +373,27 @@ function TrackPanel({ initialToken }: { initialToken: string }) {
   }, []);
 
   const search = (t: string) => {
+    const trimmed = t.trim();
+    if (!trimmed) return;
     setHighlightTracking(false);
-    navigate(`/coins?pedido=${encodeURIComponent(t)}`);
-    void load(t);
+    setActiveToken(trimmed);
+    navigate(`/coins?pedido=${encodeURIComponent(trimmed)}`);
+    void load(trimmed);
   };
 
   useEffect(() => {
-    const t = initialToken || token;
-    if (!t.trim()) return;
-    void load(t);
-    const id = setInterval(() => load(t), 10_000);
+    if (!activeToken.trim()) return;
+    void load(activeToken);
+    const id = setInterval(() => load(activeToken), 10_000);
     return () => clearInterval(id);
-  }, [initialToken, load]);
+  }, [activeToken, load]);
 
   useEffect(() => {
-    if (initialToken) setToken(initialToken);
+    if (initialToken) {
+      setToken(initialToken);
+      setActiveToken(initialToken);
+      setHighlightTracking(true);
+    }
   }, [initialToken]);
 
   return (
@@ -406,7 +413,7 @@ function TrackPanel({ initialToken }: { initialToken: string }) {
       {order && (
         <OrderDetail
           order={order}
-          onRefresh={() => load(token)}
+          onRefresh={() => load(activeToken)}
           showTrackingHighlight={highlightTracking}
         />
       )}
@@ -414,10 +421,48 @@ function TrackPanel({ initialToken }: { initialToken: string }) {
   );
 }
 
+function OrderModal({
+  order,
+  loading,
+  onClose,
+  onRefresh,
+}: {
+  order: CoinOrder | null;
+  loading: boolean;
+  onClose: () => void;
+  onRefresh: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <>
+      <div class="drawer-backdrop" onClick={onClose} />
+      <div class="drawer coins-order-modal" role="dialog" aria-modal="true" aria-label="Detalhes do pedido">
+        <button type="button" class="drawer-close" onClick={onClose} aria-label="Fechar">
+          ×
+        </button>
+        {loading && !order ? (
+          <p class="muted">Carregando pedido…</p>
+        ) : order ? (
+          <OrderDetail order={order} onRefresh={onRefresh} />
+        ) : (
+          <p class="coins-error">Pedido não encontrado.</p>
+        )}
+      </div>
+    </>
+  );
+}
+
 function HistoryPanel({ initialToken }: { initialToken: string }) {
   const { navigate } = useRouter();
   const [saved, setSaved] = useState<SavedCoinOrder[]>(() => getSavedOrders());
-  const [selectedToken, setSelectedToken] = useState(initialToken || saved[0]?.accessToken || '');
+  const [modalToken, setModalToken] = useState<string | null>(initialToken || null);
   const [order, setOrder] = useState<CoinOrder | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -430,7 +475,7 @@ function HistoryPanel({ initialToken }: { initialToken: string }) {
     try {
       const o = await fetchOrder(t.trim());
       setOrder(o);
-      rememberOrder(o);
+      updateSavedOrder(o);
       setSaved(getSavedOrders());
     } catch {
       setOrder(null);
@@ -439,10 +484,16 @@ function HistoryPanel({ initialToken }: { initialToken: string }) {
     }
   }, []);
 
-  const selectOrder = (t: string) => {
-    setSelectedToken(t);
+  const openOrder = (t: string) => {
+    setModalToken(t);
     navigate(`/coins?pedido=${encodeURIComponent(t)}&aba=historico`);
     void loadOrder(t);
+  };
+
+  const closeModal = () => {
+    setModalToken(null);
+    setOrder(null);
+    navigate('/coins?aba=historico');
   };
 
   useEffect(() => {
@@ -456,15 +507,14 @@ function HistoryPanel({ initialToken }: { initialToken: string }) {
   }, []);
 
   useEffect(() => {
-    if (selectedToken) void loadOrder(selectedToken);
-    const id = setInterval(() => {
-      if (selectedToken) void loadOrder(selectedToken);
-    }, 10_000);
+    if (!modalToken) return;
+    void loadOrder(modalToken);
+    const id = setInterval(() => loadOrder(modalToken), 10_000);
     return () => clearInterval(id);
-  }, [selectedToken, loadOrder]);
+  }, [modalToken, loadOrder]);
 
   useEffect(() => {
-    if (initialToken) setSelectedToken(initialToken);
+    if (initialToken) setModalToken(initialToken);
   }, [initialToken]);
 
   return (
@@ -472,13 +522,17 @@ function HistoryPanel({ initialToken }: { initialToken: string }) {
       <p class="coins-subtitle">Pedidos salvos neste navegador — clique para ver detalhes.</p>
       <SavedOrdersList
         orders={saved}
-        activeToken={selectedToken}
-        onSelect={selectOrder}
+        activeToken={modalToken ?? ''}
+        onSelect={openOrder}
         emptyMessage="Nenhum pedido salvo ainda. Compre ou venda TC para aparecer aqui."
       />
-      {loading && !order && selectedToken && <p class="muted">Carregando pedido…</p>}
-      {order && (
-        <OrderDetail order={order} onRefresh={() => loadOrder(selectedToken)} />
+      {modalToken && (
+        <OrderModal
+          order={order}
+          loading={loading}
+          onClose={closeModal}
+          onRefresh={() => loadOrder(modalToken)}
+        />
       )}
     </div>
   );
