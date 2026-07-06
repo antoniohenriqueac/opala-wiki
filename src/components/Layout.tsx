@@ -11,6 +11,7 @@ const NAV = [
   { href: '/bestiary', label: 'Bestiário', icon: '👹' },
   { href: '/items', label: 'Itens', icon: '🗡' },
   { href: '/quests', label: 'Missões', icon: '📜' },
+  { href: '/exp-share', label: 'Exp Share', icon: '⚡' },
   { href: '/coins', label: 'Coins', icon: '💰' },
 ];
 
