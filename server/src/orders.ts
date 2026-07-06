@@ -1,9 +1,11 @@
 import { randomUUID } from 'node:crypto';
-import { getDb } from './db.js';
+import { query, queryOne } from './db.js';
 import { config } from './env.js';
 import { createPixPayment, isPaymentApproved } from './mercadopago.js';
 import { notifyDiscord } from './notify.js';
 import { calcOrderAmount, getPackageById, savingsPct } from './pricing.js';
+import { mapOrder } from './row-map.js';
+import type { PgOrder } from './row-map.js';
 import { assertStockForBuy, onBuyOrderCompleted, onSellOrderCompleted } from './stock.js';
 import type { OrderPublic, OrderRow, OrderStatus, OrderType } from './types.js';
 
@@ -35,71 +37,90 @@ function rowToPublic(row: OrderRow): OrderPublic {
   };
 }
 
-export function getOrderByToken(token: string): OrderPublic | null {
-  const row = getDb().prepare('SELECT * FROM orders WHERE access_token = ?').get(token) as
-    | OrderRow
-    | undefined;
-  return row ? rowToPublic(row) : null;
+export async function getOrderByToken(token: string): Promise<OrderPublic | null> {
+  const row = await queryOne<PgOrder>('SELECT * FROM orders WHERE access_token = $1', [token]);
+  return row ? rowToPublic(mapOrder(row)) : null;
 }
 
-export function getOrderById(id: string): OrderRow | undefined {
-  return getDb().prepare('SELECT * FROM orders WHERE id = ?').get(id) as OrderRow | undefined;
+export async function getOrderById(id: string): Promise<OrderRow | undefined> {
+  const row = await queryOne<PgOrder>('SELECT * FROM orders WHERE id = $1', [id]);
+  return row ? mapOrder(row) : undefined;
 }
 
-export function listOrders(limit = 100): OrderRow[] {
-  return getDb()
-    .prepare('SELECT * FROM orders ORDER BY created_at DESC LIMIT ?')
-    .all(limit) as OrderRow[];
+export async function listOrders(limit = 100): Promise<OrderRow[]> {
+  const rows = await query<PgOrder>(
+    'SELECT * FROM orders ORDER BY created_at DESC LIMIT $1',
+    [limit],
+  );
+  return rows.map(mapOrder);
 }
 
-function insertOrder(row: Omit<OrderRow, 'created_at' | 'updated_at'>): OrderRow {
+async function insertOrder(row: Omit<OrderRow, 'created_at' | 'updated_at'>): Promise<OrderRow> {
   const ts = now();
-  getDb()
-    .prepare(
-      `INSERT INTO orders (
-        id, type, status, character_name, world, package_id, coin_amount, brl_amount,
-        official_price_brl, pix_key, contact, mp_payment_id, mp_qr_code, mp_qr_base64,
-        access_token, admin_notes, created_at, updated_at
-      ) VALUES (
-        @id, @type, @status, @character_name, @world, @package_id, @coin_amount, @brl_amount,
-        @official_price_brl, @pix_key, @contact, @mp_payment_id, @mp_qr_code, @mp_qr_base64,
-        @access_token, @admin_notes, @created_at, @updated_at
-      )`,
-    )
-    .run({ ...row, created_at: ts, updated_at: ts });
-  return getOrderById(row.id)!;
+  await query(
+    `INSERT INTO orders (
+      id, type, status, character_name, world, package_id, coin_amount, brl_amount,
+      official_price_brl, pix_key, contact, mp_payment_id, mp_qr_code, mp_qr_base64,
+      access_token, admin_notes, created_at, updated_at
+    ) VALUES (
+      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
+    )`,
+    [
+      row.id,
+      row.type,
+      row.status,
+      row.character_name,
+      row.world,
+      row.package_id,
+      row.coin_amount,
+      row.brl_amount,
+      row.official_price_brl,
+      row.pix_key,
+      row.contact,
+      row.mp_payment_id,
+      row.mp_qr_code,
+      row.mp_qr_base64,
+      row.access_token,
+      row.admin_notes,
+      ts,
+      ts,
+    ],
+  );
+  return (await getOrderById(row.id))!;
 }
 
-export function updateOrderStatus(
+export async function updateOrderStatus(
   id: string,
   status: OrderStatus,
   notes?: string,
-): OrderRow | undefined {
-  const existing = getOrderById(id);
+): Promise<OrderRow | undefined> {
+  const existing = await getOrderById(id);
   if (!existing) return undefined;
 
   const prevStatus = existing.status;
+  const ts = now();
 
-  getDb()
-    .prepare(
-      `UPDATE orders SET status = @status, admin_notes = COALESCE(@notes, admin_notes), updated_at = @updated_at WHERE id = @id`,
-    )
-    .run({ id, status, notes: notes ?? null, updated_at: now() });
+  await query(
+    `UPDATE orders SET status = $1, admin_notes = COALESCE($2, admin_notes), updated_at = $3 WHERE id = $4`,
+    [status, notes ?? null, ts, id],
+  );
 
   if (existing.type === 'buy' && status === 'completed' && prevStatus !== 'completed') {
-    const stockWarning = onBuyOrderCompleted(existing.coin_amount);
+    const stockWarning = await onBuyOrderCompleted(existing.coin_amount);
     if (stockWarning) {
       const note = [notes, stockWarning].filter(Boolean).join(' | ');
-      getDb()
-        .prepare(`UPDATE orders SET admin_notes = @notes, updated_at = @updated_at WHERE id = @id`)
-        .run({ id, notes: note, updated_at: now() });
+      await query(`UPDATE orders SET admin_notes = $1, updated_at = $2 WHERE id = $3`, [
+        note,
+        now(),
+        id,
+      ]);
     }
   }
   if (existing.type === 'sell' && status === 'completed' && prevStatus !== 'completed') {
-    onSellOrderCompleted(existing.coin_amount);
+    await onSellOrderCompleted(existing.coin_amount);
   }
 
-  const final = getOrderById(id)!;
+  const final = (await getOrderById(id))!;
   void notifyDiscord(final, `Status → ${status}`);
   return final;
 }
@@ -110,10 +131,10 @@ export async function createBuyOrder(input: {
   world?: string;
   contact: string;
 }): Promise<OrderPublic> {
-  const pkg = getPackageById(input.packageId);
+  const pkg = await getPackageById(input.packageId);
   if (!pkg) throw new Error('Pacote inválido');
 
-  assertStockForBuy(pkg.coin_amount);
+  await assertStockForBuy(pkg.coin_amount);
 
   const id = randomUUID();
   const accessToken = randomUUID();
@@ -125,7 +146,7 @@ export async function createBuyOrder(input: {
     `${pkg.coin_amount} coins — ${input.characterName}`,
   );
 
-  const row = insertOrder({
+  const row = await insertOrder({
     id,
     type: 'buy',
     status: 'pending_payment',
@@ -148,21 +169,21 @@ export async function createBuyOrder(input: {
   return rowToPublic(row);
 }
 
-export function createSellOrder(input: {
+export async function createSellOrder(input: {
   packageId: number;
   characterName: string;
   world?: string;
   contact: string;
   pixKey: string;
-}): OrderPublic {
-  const pkg = getPackageById(input.packageId);
+}): Promise<OrderPublic> {
+  const pkg = await getPackageById(input.packageId);
   if (!pkg) throw new Error('Pacote inválido');
 
   const id = randomUUID();
   const accessToken = randomUUID();
   const brl = calcOrderAmount('sell', pkg);
 
-  const row = insertOrder({
+  const row = await insertOrder({
     id,
     type: 'sell',
     status: 'awaiting_transfer',
@@ -186,23 +207,23 @@ export function createSellOrder(input: {
 }
 
 export async function handlePaymentWebhook(paymentId: string): Promise<void> {
-  const row = getDb()
-    .prepare('SELECT * FROM orders WHERE mp_payment_id = ?')
-    .get(paymentId) as OrderRow | undefined;
+  const row = await queryOne<PgOrder>('SELECT * FROM orders WHERE mp_payment_id = $1', [
+    paymentId,
+  ]);
   if (!row || row.type !== 'buy' || row.status !== 'pending_payment') return;
 
   const { fetchPaymentStatus } = await import('./mercadopago.js');
   const status = await fetchPaymentStatus(paymentId);
   if (status && isPaymentApproved(status)) {
-    updateOrderStatus(row.id, 'paid');
+    await updateOrderStatus(row.id, 'paid');
   }
 }
 
 /** Dev/mock: simulate PIX payment approval */
-export function mockApprovePayment(orderId: string): OrderPublic | null {
-  const row = getOrderById(orderId);
+export async function mockApprovePayment(orderId: string): Promise<OrderPublic | null> {
+  const row = await getOrderById(orderId);
   if (!row || row.type !== 'buy' || row.status !== 'pending_payment') return null;
-  const updated = updateOrderStatus(row.id, 'paid');
+  const updated = await updateOrderStatus(row.id, 'paid');
   return updated ? rowToPublic(updated) : null;
 }
 

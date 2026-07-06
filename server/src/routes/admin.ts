@@ -23,8 +23,8 @@ adminRoutes.post('/login', async (c) => {
   return c.json({ token });
 });
 
-adminRoutes.get('/orders', adminAuth, (c) => {
-  const orders = listOrders(200);
+adminRoutes.get('/orders', adminAuth, async (c) => {
+  const orders = await listOrders(200);
   return c.json({ orders });
 });
 
@@ -43,13 +43,13 @@ adminRoutes.patch('/orders/:id', adminAuth, async (c) => {
 
   const id = c.req.param('id');
   if (!id) return c.json({ error: 'ID obrigatório' }, 400);
-  const updated = updateOrderStatus(id, status, notes);
+  const updated = await updateOrderStatus(id, status, notes);
   if (!updated) return c.json({ error: 'Pedido não encontrado' }, 404);
   return c.json({ order: updated });
 });
 
-adminRoutes.get('/packages', adminAuth, (c) => {
-  return c.json({ packages: getAllPackagesAdmin() });
+adminRoutes.get('/packages', adminAuth, async (c) => {
+  return c.json({ packages: await getAllPackagesAdmin() });
 });
 
 adminRoutes.patch('/packages/:id', adminAuth, async (c) => {
@@ -61,7 +61,7 @@ adminRoutes.patch('/packages/:id', adminAuth, async (c) => {
   }>();
 
   try {
-    const updated = updatePackage(Number(c.req.param('id')), {
+    const updated = await updatePackage(Number(c.req.param('id')), {
       official_price_brl: body.officialPriceBrl,
       sell_price_brl: body.sellPriceBrl,
       buy_price_brl: body.buyPriceBrl,
@@ -74,24 +74,24 @@ adminRoutes.patch('/packages/:id', adminAuth, async (c) => {
   }
 });
 
-adminRoutes.get('/stock', adminAuth, (c) => {
-  return c.json({ stock: getStockInfo() });
+adminRoutes.get('/stock', adminAuth, async (c) => {
+  return c.json({ stock: await getStockInfo() });
 });
 
 adminRoutes.patch('/stock', adminAuth, async (c) => {
   const { total } = await c.req.json<{ total: number }>();
   try {
-    setStockTotal(total);
-    return c.json({ stock: getStockInfo() });
+    await setStockTotal(total);
+    return c.json({ stock: await getStockInfo() });
   } catch (e) {
     return c.json({ error: e instanceof Error ? e.message : 'Erro' }, 400);
   }
 });
 
-adminRoutes.get('/orders/:id', adminAuth, (c) => {
+adminRoutes.get('/orders/:id', adminAuth, async (c) => {
   const id = c.req.param('id');
   if (!id) return c.json({ error: 'ID obrigatório' }, 400);
-  const order = getOrderById(id);
+  const order = await getOrderById(id);
   if (!order) return c.json({ error: 'Não encontrado' }, 404);
   return c.json({ order });
 });

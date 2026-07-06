@@ -12,8 +12,6 @@ ENV NODE_ENV=production
 COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
-RUN mkdir -p /app/data
-ENV DATABASE_PATH=/app/data/coins.db
 ENV PORT=3001
 EXPOSE 3001
 CMD ["node", "dist/index.js"]

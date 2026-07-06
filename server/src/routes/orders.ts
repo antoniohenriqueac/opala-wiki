@@ -10,8 +10,8 @@ import {
 
 export const ordersRoutes = new Hono();
 
-ordersRoutes.get('/:token', (c) => {
-  const order = getOrderByToken(c.req.param('token'));
+ordersRoutes.get('/:token', async (c) => {
+  const order = await getOrderByToken(c.req.param('token'));
   if (!order) return c.json({ error: 'Pedido não encontrado' }, 404);
   return c.json({ order });
 });
@@ -58,7 +58,7 @@ ordersRoutes.post('/sell', async (c) => {
   }
 
   try {
-    const order = createSellOrder(body);
+    const order = await createSellOrder(body);
     return c.json({ order }, 201);
   } catch (e) {
     return c.json({ error: e instanceof Error ? e.message : 'Erro ao criar pedido' }, 400);
@@ -66,9 +66,9 @@ ordersRoutes.post('/sell', async (c) => {
 });
 
 /** Dev only: simulate PIX payment in mock mode */
-ordersRoutes.post('/:id/mock-pay', (c) => {
+ordersRoutes.post('/:id/mock-pay', async (c) => {
   if (!config.mpMock) return c.json({ error: 'Mock disabled' }, 403);
-  const order = mockApprovePayment(c.req.param('id'));
+  const order = await mockApprovePayment(c.req.param('id'));
   if (!order) return c.json({ error: 'Pedido inválido' }, 400);
   return c.json({ order });
 });

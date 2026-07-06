@@ -4,7 +4,9 @@ export function env(key: string, fallback = ''): string {
 
 export const config = {
   port: Number(env('PORT', '3001')),
-  dbPath: env('DATABASE_PATH', './data/coins.db'),
+  databaseUrl: env('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/opala_coins'),
+  databaseSsl: env('DATABASE_SSL', 'false') === 'true',
+  defaultStockCoins: Number(env('DEFAULT_STOCK_COINS', '0')),
   mpAccessToken: env('MP_ACCESS_TOKEN'),
   mpWebhookSecret: env('MP_WEBHOOK_SECRET'),
   mpMock: env('MP_MOCK', 'true') === 'true' || !env('MP_ACCESS_TOKEN'),

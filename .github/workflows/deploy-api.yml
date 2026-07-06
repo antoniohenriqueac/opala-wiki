@@ -13,6 +13,27 @@ jobs:
     defaults:
       run:
         working-directory: server
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: opala_coins
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/opala_coins
+      ADMIN_PASSWORD: ci-test
+      JWT_SECRET: ci-test-secret
+
     steps:
       - uses: actions/checkout@v4
 
@@ -25,12 +46,12 @@ jobs:
 
       - name: Smoke test
         run: |
-          timeout 5 npm run dev &
-          sleep 2
+          timeout 10 npm run dev &
+          sleep 3
           curl -sf http://localhost:3001/health
           curl -sf http://localhost:3001/api/packages | head -c 200
 
-  # Deploy: configure Railway/Fly secrets and uncomment
+  # Deploy: configure Render/Fly secrets and uncomment
   # deploy:
   #   needs: build-test
   #   runs-on: ubuntu-latest

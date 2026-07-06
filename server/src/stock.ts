@@ -1,4 +1,4 @@
-import { getDb } from './db.js';
+import { query, queryOne } from './db.js';
 
 export interface StockInfo {
   total: number;
@@ -8,60 +8,37 @@ export interface StockInfo {
 
 const BUY_RESERVE_STATUSES = ['pending_payment', 'paid', 'processing'] as const;
 
-function ensureSettings(): void {
-  const db = getDb();
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS settings (
-      key TEXT PRIMARY KEY,
-      value TEXT NOT NULL
-    );
-  `);
-  const row = db.prepare('SELECT value FROM settings WHERE key = ?').get('stock_coins') as
-    | { value: string }
-    | undefined;
-  if (!row) {
-    db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run(
-      'stock_coins',
-      String(process.env.DEFAULT_STOCK_COINS ?? '0'),
-    );
-  }
-}
-
-export function getStockTotal(): number {
-  ensureSettings();
-  const row = getDb().prepare('SELECT value FROM settings WHERE key = ?').get('stock_coins') as
-    | { value: string }
-    | undefined;
+export async function getStockTotal(): Promise<number> {
+  const row = await queryOne<{ value: string }>(
+    'SELECT value FROM settings WHERE key = $1',
+    ['stock_coins'],
+  );
   return Number(row?.value ?? 0);
 }
 
-export function setStockTotal(total: number): void {
+export async function setStockTotal(total: number): Promise<void> {
   if (!Number.isFinite(total) || total < 0) {
     throw new Error('Estoque inválido');
   }
-  ensureSettings();
-  getDb()
-    .prepare(
-      `INSERT INTO settings (key, value) VALUES ('stock_coins', @value)
-       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-    )
-    .run({ value: String(Math.floor(total)) });
+  await query(
+    `INSERT INTO settings (key, value) VALUES ('stock_coins', $1)
+     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+    [String(Math.floor(total))],
+  );
 }
 
-export function getReservedCoins(): number {
-  const placeholders = BUY_RESERVE_STATUSES.map(() => '?').join(', ');
-  const row = getDb()
-    .prepare(
-      `SELECT COALESCE(SUM(coin_amount), 0) AS s FROM orders
-       WHERE type = 'buy' AND status IN (${placeholders})`,
-    )
-    .get(...BUY_RESERVE_STATUSES) as { s: number };
-  return row.s;
+export async function getReservedCoins(): Promise<number> {
+  const row = await queryOne<{ s: string }>(
+    `SELECT COALESCE(SUM(coin_amount), 0)::text AS s FROM orders
+     WHERE type = 'buy' AND status = ANY($1::text[])`,
+    [BUY_RESERVE_STATUSES],
+  );
+  return Number(row?.s ?? 0);
 }
 
-export function getStockInfo(): StockInfo {
-  const total = getStockTotal();
-  const reserved = getReservedCoins();
+export async function getStockInfo(): Promise<StockInfo> {
+  const total = await getStockTotal();
+  const reserved = await getReservedCoins();
   return {
     total,
     reserved,
@@ -69,8 +46,8 @@ export function getStockInfo(): StockInfo {
   };
 }
 
-export function assertStockForBuy(amount: number): void {
-  const { available } = getStockInfo();
+export async function assertStockForBuy(amount: number): Promise<void> {
+  const { available } = await getStockInfo();
   if (amount > available) {
     throw new Error(
       `Estoque insuficiente. Disponível: ${available.toLocaleString('pt-BR')} coins.`,
@@ -79,21 +56,20 @@ export function assertStockForBuy(amount: number): void {
 }
 
 /** Deduct delivered coins from inventory. Returns warning if stock was lower than order. */
-export function onBuyOrderCompleted(coinAmount: number): string | null {
-  const total = getStockTotal();
+export async function onBuyOrderCompleted(coinAmount: number): Promise<string | null> {
+  const total = await getStockTotal();
   const next = Math.max(0, total - coinAmount);
-  setStockTotal(next);
+  await setStockTotal(next);
   if (coinAmount > total) {
     return `Estoque era ${total.toLocaleString('pt-BR')} coins; entregues ${coinAmount.toLocaleString('pt-BR')}. Atualize o estoque na aba Estoque.`;
   }
   return null;
 }
 
-export function onSellOrderCompleted(coinAmount: number): void {
-  setStockTotal(getStockTotal() + coinAmount);
+export async function onSellOrderCompleted(coinAmount: number): Promise<void> {
+  await setStockTotal((await getStockTotal()) + coinAmount);
 }
 
-export function packageCanBuy(coinAmount: number, available?: number): boolean {
-  const avail = available ?? getStockInfo().available;
-  return coinAmount <= avail;
+export function packageCanBuy(coinAmount: number, available: number): boolean {
+  return coinAmount <= available;
 }
