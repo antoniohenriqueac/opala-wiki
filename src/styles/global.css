@@ -2553,3 +2553,461 @@ body::-webkit-scrollbar-button,
   color: var(--gold);
 }
 
+/* ── Exp Share Calculator ── */
+.expshare-page {
+  max-width: 720px;
+}
+
+.expshare-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.expshare-subtitle {
+  color: var(--text-muted);
+  margin: 0.35rem 0 0;
+  max-width: 36rem;
+}
+
+.expshare-header-badge {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--gold-glow), transparent);
+  border: 1px solid var(--gold-2);
+  color: var(--gold);
+}
+
+.expshare-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.expshare-tabs button {
+  padding: 0.45rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-muted);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.expshare-tabs button.active {
+  background: var(--gold-glow);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.expshare-panel {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+
+.expshare-level-control {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.expshare-step {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--gold);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.expshare-step:hover {
+  border-color: var(--gold);
+  background: var(--gold-glow);
+}
+
+.expshare-level-field {
+  flex: 1;
+  text-align: center;
+}
+
+.expshare-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-bottom: 0.25rem;
+}
+
+.expshare-level-field input {
+  width: 100%;
+  max-width: 8rem;
+  margin: 0 auto;
+  display: block;
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: var(--gold);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem;
+}
+
+.expshare-slider {
+  width: 100%;
+  margin: 0.5rem 0 1rem;
+  accent-color: var(--gold);
+}
+
+.expshare-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 1.25rem;
+}
+
+.expshare-quick-btn {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+}
+
+.expshare-quick-btn:hover,
+.expshare-quick-btn.active {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: var(--gold-glow);
+}
+
+.expshare-result {
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(201, 162, 75, 0.08) 0%, transparent 100%);
+  border: 1px solid var(--gold-2);
+  margin-bottom: 1rem;
+}
+
+.expshare-result-lead {
+  text-align: center;
+  margin: 0 0 1rem;
+  color: var(--text-muted);
+}
+
+.expshare-result-range {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.75rem;
+  align-items: end;
+  margin-bottom: 1.25rem;
+}
+
+.expshare-stat {
+  text-align: center;
+}
+
+.expshare-stat-mid {
+  padding: 0 0.5rem;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+.expshare-stat-label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  margin-bottom: 0.2rem;
+}
+
+.expshare-stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: var(--gold);
+}
+
+.expshare-bar-wrap {
+  margin-top: 0.5rem;
+}
+
+.expshare-bar-track {
+  position: relative;
+  height: 0.65rem;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow: visible;
+}
+
+.expshare-bar-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2d6a4f, var(--gold));
+  opacity: 0.85;
+}
+
+.expshare-bar-focus {
+  position: absolute;
+  top: 50%;
+  width: 0.85rem;
+  height: 0.85rem;
+  margin-left: -0.425rem;
+  margin-top: -0.425rem;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px var(--gold-glow);
+  z-index: 1;
+}
+
+.expshare-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  margin-top: 0.35rem;
+  position: relative;
+}
+
+.expshare-bar-label-min,
+.expshare-bar-label-max {
+  position: absolute;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.expshare-bar-label-min { left: 18%; transform: translateX(-50%); }
+.expshare-bar-label-max { right: 18%; transform: translateX(50%); }
+
+.expshare-formula {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.expshare-formula h3 {
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem;
+}
+
+.expshare-formula ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.expshare-formula li + li {
+  margin-top: 0.35rem;
+}
+
+.expshare-formula code {
+  font-size: 0.8rem;
+  background: var(--surface);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+.expshare-party-hint {
+  color: var(--text-muted);
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+}
+
+.expshare-member-list {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.expshare-member-row {
+  display: grid;
+  grid-template-columns: 1fr 5.5rem auto;
+  gap: 0.5rem;
+}
+
+.expshare-member-row input[type='text'],
+.expshare-member-row input[type='number'] {
+  padding: 0.45rem 0.6rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.expshare-member-row input[type='number'] {
+  text-align: center;
+  font-weight: 600;
+}
+
+.expshare-member-remove {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.expshare-member-remove:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.expshare-member-remove:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.expshare-add-member {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.expshare-add-member:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.expshare-party-result {
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.expshare-party-result.ok {
+  border-color: #2d6a4f;
+  background: rgba(45, 106, 79, 0.08);
+}
+
+.expshare-party-result.warn {
+  border-color: #b45309;
+  background: rgba(180, 83, 9, 0.08);
+}
+
+.expshare-party-verdict {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.expshare-verdict-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  font-size: 0.85rem;
+}
+
+.expshare-party-result.ok .expshare-verdict-icon {
+  background: #2d6a4f;
+  color: #fff;
+}
+
+.expshare-party-result.warn .expshare-verdict-icon {
+  background: #b45309;
+  color: #fff;
+}
+
+.expshare-party-range {
+  margin: 0 0 1rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.expshare-member-status {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.expshare-member-status li {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.4rem 0.55rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: 0.85rem;
+}
+
+.expshare-member-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+}
+
+.expshare-member-status li.in .expshare-member-dot {
+  background: #4ade80;
+}
+
+.expshare-member-status li.out .expshare-member-dot {
+  background: #f87171;
+}
+
+.expshare-member-lv {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.expshare-member-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.expshare-member-status li.in .expshare-member-tag {
+  color: #4ade80;
+}
+
+.expshare-member-status li.out .expshare-member-tag {
+  color: #f87171;
+}
+
+@media (max-width: 520px) {
+  .expshare-result-range {
+    grid-template-columns: 1fr;
+  }
+
+  .expshare-stat-mid {
+    border: none;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 0.5rem 0;
+  }
+
+  .expshare-member-row {
+    grid-template-columns: 1fr 4.5rem auto;
+  }
+}
+

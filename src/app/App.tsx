@@ -7,6 +7,7 @@ import { BestiaryPage } from './routes/BestiaryPage';
 import { ItemsPage } from './routes/ItemsPage';
 import { QuestsPage } from './routes/QuestsPage';
 import { CoinsPage } from './routes/CoinsPage';
+import { ExpSharePage } from './routes/ExpSharePage';
 import { appRoute, resolveRoute, toAppPath } from '../lib/paths';
 
 function currentRouterUrl(): string {
@@ -18,6 +19,7 @@ function renderPage(path: string) {
   if (path.startsWith('/bestiary')) return <BestiaryPage />;
   if (path.startsWith('/items')) return <ItemsPage />;
   if (path.startsWith('/quests')) return <QuestsPage />;
+  if (path.startsWith('/exp-share')) return <ExpSharePage />;
   if (path.startsWith('/coins')) return <CoinsPage />;
   return <HuntsPage />;
 }

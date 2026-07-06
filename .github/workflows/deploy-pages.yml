@@ -29,6 +29,7 @@ jobs:
 
       - name: Build
         env:
+          BASE_PATH: /opala-wiki/
           VITE_COINS_API_URL: ${{ secrets.VITE_COINS_API_URL }}
         run: npm run build
 
