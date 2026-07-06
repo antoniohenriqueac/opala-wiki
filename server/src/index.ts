@@ -18,7 +18,16 @@ async function main(): Promise<void> {
   app.use(
     '/api/*',
     cors({
-      origin: config.corsOrigins,
+      origin: (origin) => {
+        if (!origin) return config.corsOrigins[0] ?? '';
+        if (config.corsOrigins.includes(origin)) return origin;
+        try {
+          if (new URL(origin).hostname.endsWith('.onrender.com')) return origin;
+        } catch {
+          /* ignore */
+        }
+        return '';
+      },
       allowMethods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
       allowHeaders: ['Content-Type', 'Authorization'],
     }),

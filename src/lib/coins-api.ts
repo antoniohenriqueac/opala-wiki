@@ -1,6 +1,22 @@
 import type { CoinOrder, CoinPackage, CoinStock } from './types';
 
-const API_BASE = (import.meta.env.VITE_COINS_API_URL as string | undefined)?.replace(/\/$/, '') ?? '';
+/** Env at build time, or Render sibling API (e.g. opala-wiki-1 → opala-wiki). */
+function resolveCoinsApiBase(): string {
+  const fromEnv = (import.meta.env.VITE_COINS_API_URL as string | undefined)?.replace(/\/$/, '');
+  if (fromEnv) return fromEnv;
+
+  if (typeof window === 'undefined') return '';
+
+  const { hostname, protocol } = window.location;
+  const renderSibling = hostname.match(/^(.+)-\d+\.onrender\.com$/);
+  if (renderSibling) {
+    return `${protocol}//${renderSibling[1]}.onrender.com`;
+  }
+
+  return '';
+}
+
+const API_BASE = resolveCoinsApiBase();
 
 function url(path: string): string {
   if (!API_BASE) throw new Error('VITE_COINS_API_URL não configurada');
