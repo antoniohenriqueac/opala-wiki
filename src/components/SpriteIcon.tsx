@@ -15,6 +15,15 @@ function sheetUrl(kind: 'item' | 'monster', page: number): string {
   return withBase(`assets/${prefix}-${String(page).padStart(2, '0')}.webp`);
 }
 
+/** Stonegy walk cycles use 8 frames; shorter strips stay static in compact UI. */
+export function monsterHasWalkAnimation(
+  assets: Record<string, SpriteAsset>,
+  imageName: string,
+): boolean {
+  const asset = assets[imageName];
+  return !!(asset?.strip && asset.frames === 8);
+}
+
 export function SpriteIcon({ kind, imageName, animated, size, assets }: SpriteIconProps) {
   const ref = useRef<HTMLDivElement>(null);
   const asset = assets[imageName];

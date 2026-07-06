@@ -1,7 +1,7 @@
 import type { HuntMetrics } from '../lib/hunt-metrics';
 import { fmtGpPerHourRange, fmtXpPerHourFromRaw } from '../lib/format';
 import { XP_DEFAULTS } from '../lib/xp-calculator';
-import { SpriteIcon } from './SpriteIcon';
+import { SpriteIcon, monsterHasWalkAnimation } from './SpriteIcon';
 import { RespawnTag } from './RespawnTag';
 import { useWiki } from '../context/WikiContext';
 
@@ -54,7 +54,13 @@ export function HuntCard({ metrics, onClick }: HuntCardProps) {
       <div class="monster-row">
         {monsters.slice(0, 4).map((m) => (
           <span class="monster-chip" key={m.id}>
-            <SpriteIcon kind="monster" imageName={m.image} size={28} assets={data.monAssets} />
+            <SpriteIcon
+              kind="monster"
+              imageName={m.image}
+              animated={monsterHasWalkAnimation(data.monAssets, m.image)}
+              size={28}
+              assets={data.monAssets}
+            />
             {m.name}
           </span>
         ))}
