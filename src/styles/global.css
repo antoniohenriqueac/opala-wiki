@@ -2636,9 +2636,28 @@ body::-webkit-scrollbar-button,
   background: var(--bg-elevated);
   color: var(--text);
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
   font-size: 0.85rem;
+}
+
+.coins-saved-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.coins-saved-meta {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.coins-saved-status {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  white-space: nowrap;
 }
 
 .coins-saved-item:hover,

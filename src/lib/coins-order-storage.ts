@@ -1,4 +1,4 @@
-import type { CoinOrder } from './types';
+import type { CoinOrder, CoinOrderStatus } from './types';
 
 const STORAGE_KEY = 'opala-coins-orders';
 const MAX_SAVED = 10;
@@ -10,14 +10,25 @@ export interface SavedCoinOrder {
   coinAmount: number;
   brlAmount: number;
   createdAt: string;
+  status: CoinOrderStatus;
 }
 
 function readAll(): SavedCoinOrder[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    const parsed = JSON.parse(raw) as SavedCoinOrder[];
-    return Array.isArray(parsed) ? parsed : [];
+    const parsed = JSON.parse(raw) as Partial<SavedCoinOrder>[];
+    return Array.isArray(parsed)
+      ? parsed.map((o) => ({
+          accessToken: o.accessToken ?? '',
+          type: o.type ?? 'buy',
+          characterName: o.characterName ?? '',
+          coinAmount: o.coinAmount ?? 0,
+          brlAmount: o.brlAmount ?? 0,
+          createdAt: o.createdAt ?? '',
+          status: o.status ?? 'pending_payment',
+        }))
+      : [];
   } catch {
     return [];
   }
@@ -35,9 +46,14 @@ export function rememberOrder(order: CoinOrder): void {
     coinAmount: order.coinAmount,
     brlAmount: order.brlAmount,
     createdAt: order.createdAt,
+    status: order.status,
   };
   const rest = readAll().filter((o) => o.accessToken !== entry.accessToken);
   writeAll([entry, ...rest]);
+}
+
+export function replaceSavedOrders(orders: SavedCoinOrder[]): void {
+  writeAll(orders);
 }
 
 export function getSavedOrders(): SavedCoinOrder[] {

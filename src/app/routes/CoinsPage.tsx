@@ -16,6 +16,7 @@ import {
   getLastOrderToken,
   getSavedOrders,
   rememberOrder,
+  replaceSavedOrders,
   type SavedCoinOrder,
 } from '../../lib/coins-order-storage';
 
@@ -301,9 +302,14 @@ function SavedOrdersList({
               class={`coins-saved-item${o.accessToken === activeToken ? ' active' : ''}`}
               onClick={() => onSelect(o.accessToken)}
             >
-              <span class="coins-saved-type">{o.type === 'buy' ? 'Compra' : 'Venda'}</span>
-              <span>
-                {o.coinAmount.toLocaleString('pt-BR')} coins · {o.characterName}
+              <span class="coins-saved-main">
+                <span class="coins-saved-type">{o.type === 'buy' ? 'Compra' : 'Venda'}</span>
+                <span class="coins-saved-meta">
+                  {o.coinAmount.toLocaleString('pt-BR')} coins · {o.characterName}
+                </span>
+              </span>
+              <span class={`coins-saved-status coins-status coins-status-${o.status}`}>
+                {STATUS_LABEL[o.status] ?? o.status}
               </span>
             </button>
           </li>
@@ -311,6 +317,24 @@ function SavedOrdersList({
       </ul>
     </div>
   );
+}
+
+async function refreshSavedStatuses(orders: SavedCoinOrder[]): Promise<SavedCoinOrder[]> {
+  if (!orders.length) return orders;
+
+  const updated = await Promise.all(
+    orders.map(async (o) => {
+      try {
+        const live = await fetchOrder(o.accessToken);
+        return { ...o, status: live.status };
+      } catch {
+        return o;
+      }
+    }),
+  );
+
+  replaceSavedOrders(updated);
+  return updated;
 }
 
 function TrackPanel({ initialToken }: { initialToken: string }) {
@@ -342,6 +366,17 @@ function TrackPanel({ initialToken }: { initialToken: string }) {
     navigate(`/coins?pedido=${encodeURIComponent(t)}`);
     void load(t);
   };
+
+  useEffect(() => {
+    const sync = async () => {
+      const current = getSavedOrders();
+      if (!current.length) return;
+      setSaved(await refreshSavedStatuses(current));
+    };
+    void sync();
+    const id = setInterval(() => void sync(), 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     const t = initialToken || token;
