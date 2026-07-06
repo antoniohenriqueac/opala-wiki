@@ -41,7 +41,7 @@ export function SpriteIcon({ kind, imageName, animated, size, assets }: SpriteIc
     }
 
     const el = ref.current;
-    el.style.animation = `${kfName} ${dur}s steps(${frames}) infinite`;
+    el.style.animation = `${kfName} ${dur}s steps(${frames - 1}) infinite`;
     el.style.backgroundPosition = `-${strip.sx}px -${strip.sy}px`;
   }, [animated, asset, imageName]);
 

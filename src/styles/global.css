@@ -534,6 +534,7 @@ button {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .sprite-placeholder {
