@@ -11,6 +11,7 @@ const NAV = [
   { href: '/bestiary', label: 'Bestiário', icon: '👹' },
   { href: '/items', label: 'Itens', icon: '🗡' },
   { href: '/quests', label: 'Missões', icon: '📜' },
+  { href: '/coins', label: 'Coins', icon: '💰' },
 ];
 
 interface LayoutProps {

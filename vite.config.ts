@@ -5,4 +5,13 @@ import preact from '@preact/preset-vite'
 export default defineConfig({
   plugins: [preact()],
   base: '/opala-wiki/',
+  server: {
+    proxy: {
+      '/coins-api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/coins-api/, ''),
+      },
+    },
+  },
 })

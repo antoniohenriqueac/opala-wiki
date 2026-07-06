@@ -158,3 +158,50 @@ export interface DropSource {
   chance: number;
   maxCount: number;
 }
+
+export type CoinOrderType = 'buy' | 'sell';
+
+export type CoinOrderStatus =
+  | 'pending_payment'
+  | 'paid'
+  | 'awaiting_transfer'
+  | 'processing'
+  | 'completed'
+  | 'cancelled'
+  | 'expired';
+
+export interface CoinPackage {
+  id: number;
+  coinAmount: number;
+  officialPriceBrl: number;
+  sellPriceBrl: number;
+  buyPriceBrl: number;
+  savingsPct: number;
+  marginBrl: number;
+  inStock: boolean;
+}
+
+export interface CoinStock {
+  total: number;
+  reserved: number;
+  available: number;
+}
+
+export interface CoinOrder {
+  id: string;
+  type: CoinOrderType;
+  status: CoinOrderStatus;
+  characterName: string;
+  coinAmount: number;
+  brlAmount: number;
+  officialPriceBrl: number | null;
+  savingsPct: number | null;
+  pixKey: string | null;
+  contact: string;
+  mpQrCode: string | null;
+  mpQrBase64: string | null;
+  gameReceiverChar: string | null;
+  accessToken: string;
+  createdAt: string;
+  updatedAt: string;
+}

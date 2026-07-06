@@ -28,6 +28,8 @@ jobs:
       - run: npm ci
 
       - name: Build
+        env:
+          VITE_COINS_API_URL: ${{ secrets.VITE_COINS_API_URL }}
         run: npm run build
 
       - name: SPA fallback

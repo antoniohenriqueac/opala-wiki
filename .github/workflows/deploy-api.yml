@@ -1,0 +1,43 @@
+name: Deploy Coins API
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/**'
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - run: npm install
+      - run: npm run build
+
+      - name: Smoke test
+        run: |
+          timeout 5 npm run dev &
+          sleep 2
+          curl -sf http://localhost:3001/health
+          curl -sf http://localhost:3001/api/packages | head -c 200
+
+  # Deploy: configure Railway/Fly secrets and uncomment
+  # deploy:
+  #   needs: build-test
+  #   runs-on: ubuntu-latest
+  #   if: github.ref == 'refs/heads/main'
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: railwayapp/railway-deploy-action@v1
+  #       with:
+  #         railway_token: ${{ secrets.RAILWAY_TOKEN }}
+  #         service: coins-api
