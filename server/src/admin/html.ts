@@ -25,6 +25,8 @@ export function adminHtml(): string {
     .stock-banner { padding: 0.65rem 1rem; margin-bottom: 1rem; background: #1e1914; border: 1px solid #5c4520; border-radius: 8px; }
     .stock-banner.warn { border-color: #8b1a1a; background: #2a1212; }
     .stock-banner strong { color: #c9a24b; }
+    code.track { font-size: 0.72rem; word-break: break-all; color: #c9a24b; }
+    .copy-btn { font-size: 0.72rem; padding: 0.15rem 0.35rem; margin-top: 0.2rem; }
   </style>
 </head>
 <body>
@@ -58,7 +60,7 @@ export function adminHtml(): string {
     <div id="tab-orders">
       <button onclick="loadOrders()">Atualizar</button>
       <table>
-        <thead><tr><th>ID</th><th>Tipo</th><th>Status</th><th>Char</th><th>Coins</th><th>R$</th><th>Contato</th><th>Ações</th></tr></thead>
+        <thead><tr><th>ID</th><th>Horário</th><th>Rastreio</th><th>Tipo</th><th>Status</th><th>Char</th><th>Coins</th><th>R$</th><th>Contato</th><th>Ações</th></tr></thead>
         <tbody id="orders-body"></tbody>
       </table>
     </div>
@@ -141,6 +143,23 @@ export function adminHtml(): string {
       loadStock();
     }
 
+    function fmtDt(iso) {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleString('pt-BR', {
+        day: '2-digit', month: '2-digit', year: '2-digit',
+        hour: '2-digit', minute: '2-digit',
+      });
+    }
+
+    async function copyToken(t) {
+      try {
+        await navigator.clipboard.writeText(t);
+        alert('Código copiado!');
+      } catch {
+        prompt('Copie o código:', t);
+      }
+    }
+
     async function loadOrders() {
       const res = await api('/orders');
       const { orders } = await res.json();
@@ -148,6 +167,11 @@ export function adminHtml(): string {
       tbody.innerHTML = orders.map(o => \`
         <tr>
           <td>\${o.id.slice(0,8)}</td>
+          <td>\${fmtDt(o.created_at)}</td>
+          <td>
+            <code class="track">\${o.access_token}</code>
+            <br><button type="button" class="secondary copy-btn" onclick="copyToken('\${o.access_token}')">Copiar</button>
+          </td>
           <td><span class="tag \${o.type}">\${o.type}</span></td>
           <td>\${o.status}</td>
           <td>\${o.character_name}</td>
