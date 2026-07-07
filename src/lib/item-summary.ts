@@ -1,6 +1,7 @@
 import type { Item } from './types';
 import { handLabelLong, vocationLabel } from './item-filters';
 import { fmtGp } from './format';
+import { getItemInsight } from './item-insights';
 
 export interface ItemHoverInfo {
   level?: number;
@@ -10,6 +11,7 @@ export interface ItemHoverInfo {
   weaponType?: string;
   hands?: string;
   npcPrice?: number;
+  utilitySummary?: string;
 }
 
 export function itemHoverInfo(it: Item): ItemHoverInfo {
@@ -22,6 +24,8 @@ export function itemHoverInfo(it: Item): ItemHoverInfo {
     .filter(Boolean)
     .join(' · ');
 
+  const insight = getItemInsight(it.id);
+
   return {
     level: it.levelMin,
     vocations: it.vocation?.length ? it.vocation.map(vocationLabel).join(' · ') : undefined,
@@ -30,6 +34,7 @@ export function itemHoverInfo(it: Item): ItemHoverInfo {
     weaponType: it.weaponType,
     hands: handLabelLong(it) ?? undefined,
     npcPrice: it.npcSellPrice,
+    utilitySummary: insight?.summary,
   };
 }
 

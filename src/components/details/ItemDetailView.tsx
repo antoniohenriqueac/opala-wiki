@@ -2,6 +2,11 @@ import { SpriteIcon } from '../SpriteIcon';
 import { StatRow } from '../ResBars';
 import { fmt, fmtChance, chanceClass, itemCategory } from '../../lib/format';
 import { handLabelLong } from '../../lib/item-filters';
+import {
+  getItemInsight,
+  insightDetailHeading,
+} from '../../lib/item-insights';
+import { ItemUtilityBadge } from '../ItemUtilityBadge';
 import type { Item, WikiData } from '../../lib/types';
 import type { WikiIndexes } from '../../lib/indexes';
 import type { DetailTarget } from '../../context/DetailContext';
@@ -22,6 +27,7 @@ export function ItemDetailView({ it, data, indexes, openDetail }: Props) {
   const drops = indexes.dropsByItem[it.id] || [];
   const cat = itemCategory(it);
   const hands = handLabelLong(it);
+  const insight = getItemInsight(it.id);
 
   const attrs = [
     { l: 'Ataque', v: it.atk },
@@ -111,11 +117,27 @@ export function ItemDetailView({ it, data, indexes, openDetail }: Props) {
               </span>
             )}
             {it.damageType && <span class="tag">{it.damageType}</span>}
+            {insight && <ItemUtilityBadge insight={insight} inline />}
           </div>
         </div>
       </div>
 
       {it.description && <div class="desc">{it.description}</div>}
+
+      {insight && (
+        <div class={`item-insight item-insight-${insight.category}`}>
+          <div class="item-insight-head">
+            <span class="item-insight-badge">{insightDetailHeading(insight)}</span>
+            <span class="item-insight-title">Utilidade real</span>
+          </div>
+          <p class="item-insight-text">{insight.detail}</p>
+          {insight.superficialPrice && (
+            <p class="item-insight-foot">
+              Preço NPC superficial — vale mais pelo uso do que pela venda.
+            </p>
+          )}
+        </div>
+      )}
 
       {(attrs.length > 0 || bonus.length > 0) && (
         <div class="detail-cols">

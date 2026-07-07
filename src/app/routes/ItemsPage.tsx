@@ -4,6 +4,7 @@ import { useDetail } from '../../context/DetailContext';
 import { PageHeader } from '../../components/PageHeader';
 import { SpriteIcon } from '../../components/SpriteIcon';
 import { ItemHoverTip } from '../../components/ItemHoverTip';
+import { ItemUtilityBadge } from '../../components/ItemUtilityBadge';
 import { StatsBar } from '../../components/FilterHelpers';
 import {
   FilterBlock,
@@ -12,6 +13,12 @@ import {
   WikiFilterPanel,
 } from '../../components/WikiFilterLayout';
 import { itemCategory, matchQuery } from '../../lib/format';
+import {
+  getItemInsight,
+  matchesUtilityFilter,
+  UTILITY_FILTER_OPTIONS,
+  type UtilityFilter,
+} from '../../lib/item-insights';
 import {
   filterItems,
   handLabel,
@@ -44,6 +51,7 @@ export function ItemsPage(_props: { path?: string }) {
   const [vocation, setVocation] = useState<string | null>(saved.vocation ?? null);
   const [levelMin, setLevelMin] = useState<number | null>(null);
   const [levelMax, setLevelMax] = useState<number | null>(null);
+  const [utilityFilter, setUtilityFilter] = useState<UtilityFilter | null>(null);
 
   useEffect(() => {
     saveItemFilters({ vocation });
@@ -89,9 +97,9 @@ export function ItemsPage(_props: { path?: string }) {
     }).filter((i) => {
       if (!q || q === 'kina') return true;
       return matchQuery(i.name, q) || matchQuery(String(i.id), q);
-    });
+    }).filter((i) => matchesUtilityFilter(i.id, utilityFilter));
     return sortItemsByLevel(filtered);
-  }, [data.items, query, slot, weaponType, hands, rarity, vocation, levelMin, levelMax]);
+  }, [data.items, query, slot, weaponType, hands, rarity, vocation, levelMin, levelMax, utilityFilter]);
 
   const clear = () => {
     setQuery('');
@@ -102,6 +110,7 @@ export function ItemsPage(_props: { path?: string }) {
     setVocation(null);
     setLevelMin(null);
     setLevelMax(null);
+    setUtilityFilter(null);
   };
 
   const levelLabel =
@@ -117,7 +126,8 @@ export function ItemsPage(_props: { path?: string }) {
     (hands ? 1 : 0) +
     (rarity != null ? 1 : 0) +
     (vocation ? 1 : 0) +
-    ((levelMin != null && levelMin > 0) || (levelMax != null && levelMax > 0) ? 1 : 0);
+    ((levelMin != null && levelMin > 0) || (levelMax != null && levelMax > 0) ? 1 : 0) +
+    (utilityFilter ? 1 : 0);
 
   return (
     <>
@@ -303,6 +313,28 @@ export function ItemsPage(_props: { path?: string }) {
           </FilterBlock>
         </div>
 
+        <FilterBlock label="Utilidade">
+          <FilterChipRow>
+            <button
+              type="button"
+              class={`chip chip-sm${!utilityFilter ? ' active' : ''}`}
+              onClick={() => setUtilityFilter(null)}
+            >
+              Todos
+            </button>
+            {UTILITY_FILTER_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                class={`chip chip-sm utility-chip utility-chip-${opt.id}${utilityFilter === opt.id ? ' active' : ''}`}
+                onClick={() => setUtilityFilter(utilityFilter === opt.id ? null : opt.id)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </FilterChipRow>
+        </FilterBlock>
+
         <FilterFooter activeCount={activeFilters} onClear={clear} />
       </WikiFilterPanel>
       <StatsBar
@@ -319,6 +351,7 @@ export function ItemsPage(_props: { path?: string }) {
             const cat = itemCategory(it);
             const dropCount = (indexes.dropsByItem[it.id] || []).length;
             const handsTag = handLabel(it);
+            const insight = getItemInsight(it.id);
             const meta = [
               it.atk != null ? `atk ${it.atk}` : null,
               it.arm != null ? `arm ${it.arm}` : null,
@@ -350,6 +383,7 @@ export function ItemsPage(_props: { path?: string }) {
                   {handsTag && <span class={`tag hand-tag hand-tag-${handsTag.toLowerCase()}`}>{handsTag}</span>}
                   {dropCount > 0 && <span class="tag">{dropCount} drops</span>}
                 </div>
+                {insight && <ItemUtilityBadge insight={insight} />}
                 <div class="card-sub">{meta}</div>
               </ItemHoverTip>
             );

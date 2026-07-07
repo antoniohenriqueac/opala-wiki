@@ -1,4 +1,5 @@
 import type { Item } from './types';
+import { hasSuperficialPrice } from './item-insights';
 
 const STORAGE_KEY = 'lootfilter:';
 
@@ -24,6 +25,7 @@ const JUNK_NAMES = /rope|banana|orange|melon|cheese|meat|fish|mushroom|cherry|gr
 const JUNK_MAX_NPC = 50;
 
 export function isJunkItem(item: Item): boolean {
+  if (hasSuperficialPrice(item.id)) return false;
   const price = item.npcSellPrice ?? 0;
   if (price > 0 && price <= JUNK_MAX_NPC) return true;
   return JUNK_NAMES.test(item.name);

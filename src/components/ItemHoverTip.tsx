@@ -83,6 +83,9 @@ function TooltipCard({
             {info.slot && <span>{info.slot}</span>}
           </div>
         )}
+        {info.utilitySummary && (
+          <div class="item-hover-utility">{info.utilitySummary}</div>
+        )}
         <div class="item-hover-foot">
           {info.npcPrice != null && (
             <span class="item-hover-gp">
