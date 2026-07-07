@@ -6,6 +6,8 @@ import { isModifiedClick, useRouter } from '../context/RouterContext';
 const DONATE_PIX_URL =
   'https://nubank.com.br/cobrar/5hux2/6a4aa55b-32b6-44ca-a71f-85d7fc5ef765';
 
+const MOBILE_NAV_MQ = '(max-width: 768px)';
+
 /** Set to true when the TC shop should appear in the sidebar. */
 const COINS_SHOP_VISIBLE = false;
 
@@ -29,6 +31,7 @@ export function Layout({ url = '/hunts', children }: LayoutProps) {
   const path = url.split('?')[0] || '/hunts';
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -43,9 +46,82 @@ export function Layout({ url = '/hunts', children }: LayoutProps) {
     });
   }, []);
 
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [path]);
+
+  useEffect(() => {
+    if (!menuOpen) {
+      document.body.classList.remove('mobile-menu-open');
+      return;
+    }
+    document.body.classList.add('mobile-menu-open');
+    return () => document.body.classList.remove('mobile-menu-open');
+  }, [menuOpen]);
+
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_NAV_MQ);
+    const onChange = () => {
+      if (!mq.matches) setMenuOpen(false);
+    };
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  const isActive = (href: string) =>
+    href === '/hunts'
+      ? path === '/' || path.startsWith('/hunts')
+      : path.startsWith(href);
+
+  const go = (href: string, event: MouseEvent) => {
+    if (isModifiedClick(event)) return;
+    event.preventDefault();
+    setMenuOpen(false);
+    navigate(href);
+  };
+
+  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
+
   return (
-    <div class="layout">
-      <aside class="sidebar">
+    <div class={`layout${menuOpen ? ' menu-open' : ''}`}>
+      <header class="mobile-topbar">
+        <button
+          type="button"
+          class="mobile-menu-btn"
+          aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          <span class="mobile-menu-icon" aria-hidden="true" />
+        </button>
+        <a
+          href={resolveRoute('/hunts')}
+          class="mobile-topbar-brand"
+          onClick={(e) => go('/hunts', e)}
+        >
+          <img
+            class="mobile-topbar-avatar"
+            src={withBase('opala-avatar.png')}
+            alt=""
+            width={32}
+            height={32}
+          />
+          <span>Opala Wiki</span>
+        </a>
+        <button type="button" class="mobile-theme-btn" onClick={toggleTheme} aria-label="Alternar tema">
+          {theme === 'dark' ? '☀' : '☾'}
+        </button>
+      </header>
+
+      <button
+        type="button"
+        class="sidebar-backdrop"
+        aria-label="Fechar menu"
+        tabIndex={menuOpen ? 0 : -1}
+        onClick={() => setMenuOpen(false)}
+      />
+
+      <aside class="sidebar" id="site-sidebar">
         <div class="brand">
           <div class="brand-row">
             <img class="brand-avatar" src={withBase('opala-avatar.png')} alt="Opala" width="40" height="40" />
@@ -55,25 +131,13 @@ export function Layout({ url = '/hunts', children }: LayoutProps) {
             </div>
           </div>
         </div>
-        <nav class="nav">
+        <nav class="nav" aria-label="Principal">
           {NAV.map((item) => (
             <a
               key={item.href}
               href={resolveRoute(item.href)}
-              onClick={(event) => {
-                if (isModifiedClick(event)) return;
-                event.preventDefault();
-                navigate(item.href);
-              }}
-              class={`nav-link${
-                item.href === '/hunts'
-                  ? path === '/' || path.startsWith('/hunts')
-                    ? ' active'
-                    : ''
-                  : path.startsWith(item.href)
-                    ? ' active'
-                    : ''
-              }`}
+              onClick={(event) => go(item.href, event)}
+              class={`nav-link${isActive(item.href) ? ' active' : ''}`}
             >
               <span class="nav-link-icon">
                 {item.iconSrc ? (
@@ -95,11 +159,7 @@ export function Layout({ url = '/hunts', children }: LayoutProps) {
             </a>
           ))}
         </nav>
-        <button
-          type="button"
-          class="theme-toggle"
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-        >
+        <button type="button" class="theme-toggle sidebar-theme-toggle" onClick={toggleTheme}>
           {theme === 'dark' ? '☀ Claro' : '☾ Escuro'}
         </button>
         <div class="donate-block">
