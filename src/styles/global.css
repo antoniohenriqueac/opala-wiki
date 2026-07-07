@@ -244,7 +244,20 @@ button {
   }
 
   .page-header-inner {
-    gap: 0.5rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.4rem;
+  }
+
+  .page-header-text,
+  .page-header-search {
+    flex: none;
+    width: 100%;
+    max-width: none;
+  }
+
+  .search-bar-header {
+    flex: none;
   }
 
   .search-bar-header .search-bar-label {
@@ -286,11 +299,6 @@ button {
     padding: 0.85rem;
   }
 
-  .hunt-card-icon {
-    min-height: 104px;
-    margin: 0.1rem 0 0.2rem;
-  }
-
   .search-bar-kbd {
     display: none;
   }
@@ -300,8 +308,21 @@ button {
   }
 
   .wiki-filters {
-    padding: 1rem;
-    margin-bottom: 1rem;
+    padding: 0.65rem;
+    margin-bottom: 0.75rem;
+    gap: 0;
+  }
+
+  .wiki-filters-open {
+    padding: 0.65rem 0.85rem 0.85rem;
+    gap: 0.65rem;
+  }
+
+  .wiki-filters-collapsed .wiki-filters-body {
+    display: none;
+  }
+
+  .wiki-filters-body {
     gap: 1rem;
   }
 
@@ -471,7 +492,9 @@ button {
     align-items: stretch;
   }
 
+  .page-header-text,
   .page-header-search {
+    flex: none;
     max-width: none;
   }
 }
@@ -2592,9 +2615,68 @@ body::-webkit-scrollbar-button,
 .wiki-filters {
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 0.65rem;
   margin-bottom: 1.5rem;
   padding: 1.15rem 1.25rem 1rem;
+}
+
+.wiki-filters-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  min-width: 0;
+}
+
+.wiki-filters-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-muted);
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text);
+  text-align: left;
+}
+
+.wiki-filters-toggle:hover {
+  border-color: var(--gold);
+  background: var(--surface);
+}
+
+@media (min-width: 769px) {
+  .wiki-filters-toggle {
+    display: none;
+  }
+}
+
+.wiki-filters-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.wiki-filters-toggle-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--gold);
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--gold-2);
+  background: var(--gold-glow);
+}
+
+.wiki-filters-toggle-icon {
+  flex-shrink: 0;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  line-height: 1;
 }
 
 .wiki-filters-row {
@@ -3195,44 +3277,64 @@ body::-webkit-scrollbar-button,
 }
 
 .expshare-header {
+  margin-bottom: 0.85rem;
+}
+
+.expshare-header-title-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
+  gap: 0.75rem;
+}
+
+.expshare-header h1 {
+  margin: 0;
+  font-size: 1.65rem;
+  line-height: 1.15;
 }
 
 .expshare-subtitle {
   color: var(--text-muted);
   margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
   max-width: 36rem;
 }
 
 .expshare-header-badge {
   flex-shrink: 0;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 0.35rem 0.65rem;
+  padding: 0.25rem 0.5rem;
   border-radius: var(--radius-sm);
   background: linear-gradient(135deg, var(--gold-glow), transparent);
   border: 1px solid var(--gold-2);
   color: var(--gold);
 }
 
+.expshare-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
 .expshare-tabs {
   display: flex;
   gap: 0.35rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .expshare-tabs button {
-  padding: 0.45rem 1rem;
+  flex: 1;
+  padding: 0.45rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg-muted);
   color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -3246,7 +3348,91 @@ body::-webkit-scrollbar-button,
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1.25rem;
+  padding: 1.15rem;
+}
+
+@media (max-width: 768px) {
+  .expshare-header {
+    margin-bottom: 0.55rem;
+  }
+
+  .expshare-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .expshare-subtitle {
+    display: none;
+  }
+
+  .expshare-header-badge {
+    font-size: 0.58rem;
+    padding: 0.18rem 0.4rem;
+  }
+
+  .expshare-shell {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--bg-elevated);
+  }
+
+  .expshare-tabs {
+    margin-bottom: 0;
+    gap: 0;
+    padding: 0.35rem 0.35rem 0;
+    background: var(--bg-muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .expshare-tabs button {
+    border: none;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    background: transparent;
+    padding: 0.45rem 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .expshare-tabs button.active {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-bottom-color: var(--bg-elevated);
+    margin-bottom: -1px;
+  }
+
+  .expshare-panel {
+    border: none;
+    border-radius: 0;
+    padding: 0.85rem;
+  }
+
+  .expshare-level-field input {
+    font-size: 1.65rem;
+    max-width: 6.5rem;
+    padding: 0.25rem;
+  }
+
+  .expshare-step {
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: 1.1rem;
+  }
+
+  .expshare-quick {
+    gap: 0.35rem;
+  }
+
+  .expshare-quick-btn {
+    padding: 0.28rem 0.45rem;
+    font-size: 0.72rem;
+  }
+
+  .expshare-result-lead {
+    font-size: 0.85rem;
+  }
+
+  .expshare-stat-value {
+    font-size: 1.35rem;
+  }
 }
 
 .expshare-level-control {

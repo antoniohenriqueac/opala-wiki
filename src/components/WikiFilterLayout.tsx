@@ -1,13 +1,71 @@
+import { useEffect, useState } from 'preact/hooks';
 import type { ComponentChildren } from 'preact';
+
+const MOBILE_FILTERS_MQ = '(max-width: 768px)';
+
+function isMobileFilters(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia(MOBILE_FILTERS_MQ).matches;
+}
 
 export function WikiFilterPanel({
   children,
   class: className,
+  activeCount = 0,
 }: {
   children: ComponentChildren;
   class?: string;
+  activeCount?: number;
 }) {
-  return <div class={`wiki-filters panel${className ? ` ${className}` : ''}`}>{children}</div>;
+  const [open, setOpen] = useState(() => !isMobileFilters());
+  const [collapsible, setCollapsible] = useState(isMobileFilters);
+
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_FILTERS_MQ);
+    const sync = () => {
+      const mobile = mq.matches;
+      setCollapsible(mobile);
+      if (!mobile) setOpen(true);
+    };
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
+  const collapsed = collapsible && !open;
+  const panelClass = [
+    'wiki-filters',
+    'panel',
+    className,
+    collapsed ? 'wiki-filters-collapsed' : 'wiki-filters-open',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return (
+    <div class={panelClass}>
+      {collapsible && (
+        <button
+          type="button"
+          class="wiki-filters-toggle"
+          aria-expanded={open}
+          onClick={() => setOpen((value) => !value)}
+        >
+          <span class="wiki-filters-toggle-label">
+            Filtros
+            {activeCount > 0 && (
+              <span class="wiki-filters-toggle-badge">
+                {activeCount} ativo{activeCount === 1 ? '' : 's'}
+              </span>
+            )}
+          </span>
+          <span class="wiki-filters-toggle-icon" aria-hidden="true">
+            {open ? '▾' : '▸'}
+          </span>
+        </button>
+      )}
+      <div class="wiki-filters-body">{children}</div>
+    </div>
+  );
 }
 
 export function FilterBlock({

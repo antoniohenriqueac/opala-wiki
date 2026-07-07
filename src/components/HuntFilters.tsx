@@ -65,7 +65,7 @@ export function HuntFilters({ state, onChange, onClear }: HuntFiltersProps) {
   const activeFilters = countActiveFilters(state);
 
   return (
-    <WikiFilterPanel class="wiki-filters-hunts">
+    <WikiFilterPanel class="wiki-filters-hunts" activeCount={activeFilters}>
       <div class="wiki-filters-row wiki-filters-row-3">
         <FilterBlock label="Seu level">
           <input

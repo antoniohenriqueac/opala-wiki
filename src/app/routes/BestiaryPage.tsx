@@ -78,7 +78,7 @@ export function BestiaryPage(_props: { path?: string }) {
         searchInputId="bestiary-search"
         searchPlaceholder="Nome do monstro…"
       />
-      <WikiFilterPanel>
+      <WikiFilterPanel activeCount={activeFilters}>
         <FilterBlock label="Raça">
           <FilterChipRow>
             <button type="button" class={`chip chip-sm${!race ? ' active' : ''}`} onClick={() => setRace(null)}>

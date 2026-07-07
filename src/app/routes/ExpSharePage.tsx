@@ -239,33 +239,39 @@ export function ExpSharePage() {
   return (
     <div class="expshare-page">
       <header class="expshare-header">
-        <div>
-          <h1>Exp Share Calculator</h1>
-          <p class="expshare-subtitle">
-            Descubra a faixa de levels para compartilhar experiência em party — mesma regra do Tibia / OT.
-          </p>
+        <div class="expshare-header-title-row">
+          <h1>Exp Share</h1>
+          <span class="expshare-header-badge">Party XP</span>
         </div>
-        <div class="expshare-header-badge">Party XP</div>
+        <p class="expshare-subtitle">
+          Faixa de levels para compartilhar exp em party — mesma regra do Tibia / OT.
+        </p>
       </header>
 
-      <div class="expshare-tabs">
-        <button
-          type="button"
-          class={mode === 'solo' ? 'active' : ''}
-          onClick={() => setMode('solo')}
-        >
-          Por level
-        </button>
-        <button
-          type="button"
-          class={mode === 'party' ? 'active' : ''}
-          onClick={() => setMode('party')}
-        >
-          Verificar party
-        </button>
-      </div>
+      <div class="expshare-shell">
+        <div class="expshare-tabs" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === 'solo'}
+            class={mode === 'solo' ? 'active' : ''}
+            onClick={() => setMode('solo')}
+          >
+            Por level
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === 'party'}
+            class={mode === 'party' ? 'active' : ''}
+            onClick={() => setMode('party')}
+          >
+            Verificar party
+          </button>
+        </div>
 
-      <div class="expshare-panel">{mode === 'solo' ? <SoloPanel /> : <PartyPanel />}</div>
+        <div class="expshare-panel">{mode === 'solo' ? <SoloPanel /> : <PartyPanel />}</div>
+      </div>
     </div>
   );
 }

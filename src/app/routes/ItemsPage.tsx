@@ -129,7 +129,7 @@ export function ItemsPage(_props: { path?: string }) {
         searchInputId="items-search"
         searchPlaceholder="Nome do item… (kina = Knight)"
       />
-      <WikiFilterPanel>
+      <WikiFilterPanel activeCount={activeFilters}>
         <div class="wiki-filters-row items-filters-top">
           <FilterBlock label="Level req.">
             <div class="items-level-row">

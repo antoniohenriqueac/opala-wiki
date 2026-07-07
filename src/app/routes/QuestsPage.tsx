@@ -71,7 +71,7 @@ export function QuestsPage(_props: { path?: string }) {
         searchInputId="quests-search"
         searchPlaceholder="Nome da missão…"
       />
-      <WikiFilterPanel>
+      <WikiFilterPanel activeCount={activeFilters}>
         <div class="wiki-filters-row">
           <FilterBlock label="Acesso">
             <FilterChipRow>
