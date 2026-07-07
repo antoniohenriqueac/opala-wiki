@@ -4127,3 +4127,452 @@ body::-webkit-scrollbar-button,
   }
 }
 
+/* ── RMT KK Price Calculator ── */
+.rmtkk-page {
+  max-width: 720px;
+}
+
+.rmtkk-header {
+  margin-bottom: 0.85rem;
+}
+
+.rmtkk-header-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.rmtkk-header h1 {
+  margin: 0;
+  font-size: 1.65rem;
+  line-height: 1.15;
+}
+
+.rmtkk-subtitle {
+  color: var(--text-muted);
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  max-width: 36rem;
+}
+
+.rmtkk-header-badge {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--gold-glow), transparent);
+  border: 1px solid var(--gold-2);
+  color: var(--gold);
+}
+
+.rmtkk-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.rmtkk-panel {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.15rem;
+}
+
+.rmtkk-section-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  font-family: var(--font-ui);
+  font-weight: 700;
+}
+
+.rmtkk-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.rmtkk-tier-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.rmtkk-tier {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.65rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-muted);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.rmtkk-tier:hover {
+  border-color: var(--gold-2);
+}
+
+.rmtkk-tier.selected {
+  background: var(--gold-glow);
+  border-color: var(--gold);
+}
+
+.rmtkk-tier-brl {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--gold);
+}
+
+.rmtkk-tier-coins {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.rmtkk-tier-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--success);
+  background: rgba(45, 106, 79, 0.12);
+  padding: 0.1rem 0.35rem;
+  border-radius: 999px;
+}
+
+.rmtkk-gold-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.65rem;
+}
+
+.rmtkk-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.rmtkk-gold-control input {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  font-size: 1rem;
+}
+
+.rmtkk-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.rmtkk-quick-btn {
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rmtkk-quick-btn:hover,
+.rmtkk-quick-btn.active {
+  background: var(--gold-glow);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.rmtkk-result {
+  background: var(--bg-elevated);
+  border: 1px solid var(--gold-2);
+  border-radius: var(--radius);
+  padding: 1.15rem;
+}
+
+.rmtkk-result-lead {
+  margin: 0 0 0.85rem;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.rmtkk-quick-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.rmtkk-result-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.rmtkk-stat {
+  text-align: center;
+}
+
+.rmtkk-stat-highlight .rmtkk-stat-value {
+  color: var(--gold);
+  font-size: 1.35rem;
+}
+
+.rmtkk-stat-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  margin-bottom: 0.25rem;
+}
+
+.rmtkk-stat-value {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: var(--font-display);
+}
+
+.rmtkk-price-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.65rem;
+}
+
+.rmtkk-price-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.rmtkk-price-card-equilibrium {
+  background: var(--bg-muted);
+  border-color: var(--border-strong);
+}
+
+.rmtkk-price-card-ideal {
+  background: rgba(45, 106, 79, 0.08);
+  border-color: rgba(45, 106, 79, 0.35);
+}
+
+.rmtkk-price-card-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+
+.rmtkk-price-card-equilibrium .rmtkk-price-card-value {
+  color: var(--gold);
+}
+
+.rmtkk-price-card-ideal .rmtkk-price-card-value {
+  color: var(--success);
+}
+
+.rmtkk-price-card-value {
+  font-size: 1.45rem;
+  font-weight: 700;
+  font-family: var(--font-display);
+  line-height: 1.2;
+}
+
+.rmtkk-price-card-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.rmtkk-bonus-note {
+  margin: 0.85rem 0 0;
+  font-size: 0.82rem;
+  color: var(--success);
+}
+
+.rmtkk-verdict {
+  border-radius: var(--radius);
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--border);
+}
+
+.rmtkk-verdict-cheap {
+  background: rgba(45, 106, 79, 0.1);
+  border-color: rgba(45, 106, 79, 0.35);
+}
+
+.rmtkk-verdict-fair {
+  background: var(--gold-glow);
+  border-color: var(--gold-2);
+}
+
+.rmtkk-verdict-expensive {
+  background: rgba(139, 26, 26, 0.08);
+  border-color: rgba(139, 26, 26, 0.35);
+}
+
+.rmtkk-verdict-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.rmtkk-verdict-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.rmtkk-verdict-cheap .rmtkk-verdict-icon {
+  background: rgba(45, 106, 79, 0.2);
+  color: var(--success);
+}
+
+.rmtkk-verdict-fair .rmtkk-verdict-icon {
+  background: var(--gold-glow);
+  color: var(--gold);
+}
+
+.rmtkk-verdict-expensive .rmtkk-verdict-icon {
+  background: rgba(139, 26, 26, 0.15);
+  color: var(--accent);
+}
+
+.rmtkk-verdict-title {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.rmtkk-verdict-detail,
+.rmtkk-verdict-hint {
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.rmtkk-table-wrap {
+  overflow-x: auto;
+}
+
+.rmtkk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.rmtkk-table th,
+.rmtkk-table td {
+  padding: 0.5rem 0.65rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.rmtkk-table th {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.rmtkk-table tr.selected td {
+  background: var(--gold-glow);
+  font-weight: 600;
+}
+
+.rmtkk-table-bonus {
+  font-size: 0.72rem;
+  color: var(--success);
+  font-weight: 600;
+}
+
+.rmtkk-empty p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.rmtkk-formula {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.rmtkk-formula h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.rmtkk-formula ul {
+  margin: 0;
+  padding-left: 1.15rem;
+}
+
+.rmtkk-formula li + li {
+  margin-top: 0.35rem;
+}
+
+.rmtkk-formula code {
+  font-size: 0.8rem;
+  background: var(--bg-muted);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+.rmtkk-disclaimer {
+  margin: 0.75rem 0 0;
+  font-size: 0.78rem;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .rmtkk-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .rmtkk-subtitle {
+    display: none;
+  }
+
+  .rmtkk-tier-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .rmtkk-result-stats {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .rmtkk-price-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .rmtkk-stat-highlight .rmtkk-stat-value {
+    font-size: 1.2rem;
+  }
+}
+

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build && cp dist/index.html dist/404.html",
-    "test": "tsx --test src/lib/xp-calculator.test.ts",
+    "test": "tsx --test src/lib/xp-calculator.test.ts src/lib/rmt-kk-calculator.test.ts src/lib/exp-share.test.ts",
     "seed": "tsx tools/extract/index.ts",
     "seed:codexloot": "tsx scripts/seed-from-codexloot.ts",
     "extract": "tsx tools/extract/index.ts",

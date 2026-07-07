@@ -17,6 +17,7 @@ const NAV: Array<{ href: string; label: string; icon?: string; iconSrc?: string;
   { href: '/items', label: 'Itens', icon: '🗡' },
   { href: '/quests', label: 'Missões', icon: '📜' },
   { href: '/exp-share', label: 'Exp Share', icon: '⚡' },
+  { href: '/rmt-kk', label: 'Preço KK', icon: '💰' },
   { href: '/coins', label: 'Compre/Venda TC', iconSrc: 'tc-coin.png', badge: 'BETA' },
 ].filter((item) => COINS_SHOP_VISIBLE || item.href !== '/coins');
 

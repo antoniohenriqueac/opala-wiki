@@ -8,6 +8,7 @@ import { ItemsPage } from './routes/ItemsPage';
 import { QuestsPage } from './routes/QuestsPage';
 import { CoinsPage } from './routes/CoinsPage';
 import { ExpSharePage } from './routes/ExpSharePage';
+import { RmtKkPage } from './routes/RmtKkPage';
 import { appRoute, resolveRoute, toAppPath } from '../lib/paths';
 
 function currentRouterUrl(): string {
@@ -20,6 +21,7 @@ function renderPage(path: string) {
   if (path.startsWith('/items')) return <ItemsPage />;
   if (path.startsWith('/quests')) return <QuestsPage />;
   if (path.startsWith('/exp-share')) return <ExpSharePage />;
+  if (path.startsWith('/rmt-kk')) return <RmtKkPage />;
   if (path.startsWith('/coins')) return <CoinsPage />;
   return <HuntsPage />;
 }
