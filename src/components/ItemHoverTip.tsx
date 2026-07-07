@@ -75,10 +75,11 @@ function TooltipCard({
             )}
           </div>
         </div>
-        {(info.stats || info.vocations || info.slot) && (
+        {(info.stats || info.vocations || info.slot || info.hands) && (
           <div class="item-hover-stats">
             {info.stats && <span>{info.stats}</span>}
             {info.vocations && <span>{info.vocations}</span>}
+            {info.hands && <span>{info.hands}</span>}
             {info.slot && <span>{info.slot}</span>}
           </div>
         )}

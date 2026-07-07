@@ -1,5 +1,5 @@
 import type { Item } from './types';
-import { vocationLabel } from './item-filters';
+import { handLabelLong, vocationLabel } from './item-filters';
 import { fmtGp } from './format';
 
 export interface ItemHoverInfo {
@@ -8,6 +8,7 @@ export interface ItemHoverInfo {
   stats?: string;
   slot?: string;
   weaponType?: string;
+  hands?: string;
   npcPrice?: number;
 }
 
@@ -27,6 +28,7 @@ export function itemHoverInfo(it: Item): ItemHoverInfo {
     stats: stats || undefined,
     slot: it.slot,
     weaponType: it.weaponType,
+    hands: handLabelLong(it) ?? undefined,
     npcPrice: it.npcSellPrice,
   };
 }
@@ -39,6 +41,7 @@ export function itemHoverLines(it: Item): string[] {
   if (info.vocations) lines.push(info.vocations);
   if (info.stats) lines.push(info.stats);
   if (info.slot) lines.push(info.slot);
+  if (info.hands) lines.push(info.hands);
   if (info.weaponType) lines.push(info.weaponType);
   if (info.npcPrice != null) lines.push(`NPC ${fmtGp(info.npcPrice)}`);
   return lines;

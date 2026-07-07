@@ -3,11 +3,26 @@ import { useWiki } from '../../context/WikiContext';
 import { useDetail } from '../../context/DetailContext';
 import { PageHeader } from '../../components/PageHeader';
 import { SpriteIcon } from '../../components/SpriteIcon';
-import { ClearFiltersButton, StatsBar } from '../../components/FilterHelpers';
+import { StatsBar } from '../../components/FilterHelpers';
+import {
+  FilterBlock,
+  FilterChipRow,
+  FilterFooter,
+  WikiFilterPanel,
+} from '../../components/WikiFilterLayout';
 import { fmt, matchQuery, renderStars } from '../../lib/format';
 import type { Monster } from '../../lib/types';
 
 const CAP = 400;
+
+function raceLabel(race: string): string {
+  if (race === 'NONE') return 'Nenhuma';
+  return race
+    .toLowerCase()
+    .split('_')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
 
 export function BestiaryPage(_props: { path?: string }) {
   const { data } = useWiki();
@@ -51,6 +66,8 @@ export function BestiaryPage(_props: { path?: string }) {
     setDifficulty(null);
   };
 
+  const activeFilters = (race ? 1 : 0) + (difficulty != null ? 1 : 0);
+
   return (
     <>
       <PageHeader
@@ -61,31 +78,30 @@ export function BestiaryPage(_props: { path?: string }) {
         searchInputId="bestiary-search"
         searchPlaceholder="Nome do monstro…"
       />
-      <div class="filter-panel panel">
-        <div class="field">
-          <label>Raça</label>
-          <div class="chip-group">
-            <button type="button" class={`chip${!race ? ' active' : ''}`} onClick={() => setRace(null)}>
+      <WikiFilterPanel>
+        <FilterBlock label="Raça">
+          <FilterChipRow>
+            <button type="button" class={`chip chip-sm${!race ? ' active' : ''}`} onClick={() => setRace(null)}>
               Todas
             </button>
             {races.map((r) => (
               <button
                 key={r}
                 type="button"
-                class={`chip${race === r ? ' active' : ''}`}
+                class={`chip chip-sm${race === r ? ' active' : ''}`}
                 onClick={() => setRace(race === r ? null : r)}
               >
-                {r}
+                {raceLabel(r)}
               </button>
             ))}
-          </div>
-        </div>
-        <div class="field">
-          <label>Dificuldade</label>
-          <div class="chip-group">
+          </FilterChipRow>
+        </FilterBlock>
+
+        <FilterBlock label="Dificuldade">
+          <FilterChipRow>
             <button
               type="button"
-              class={`chip${difficulty == null ? ' active' : ''}`}
+              class={`chip chip-sm${difficulty == null ? ' active' : ''}`}
               onClick={() => setDifficulty(null)}
             >
               Todas
@@ -94,16 +110,18 @@ export function BestiaryPage(_props: { path?: string }) {
               <button
                 key={d}
                 type="button"
-                class={`chip diff-${d}${difficulty === d ? ' active' : ''}`}
+                class={`chip chip-sm diff-${d}${difficulty === d ? ' active' : ''}`}
                 onClick={() => setDifficulty(difficulty === d ? null : d)}
+                title={`Dificuldade ${d}`}
               >
                 {renderStars(d)}
               </button>
             ))}
-          </div>
-        </div>
-        <ClearFiltersButton onClear={clear} />
-      </div>
+          </FilterChipRow>
+        </FilterBlock>
+
+        <FilterFooter activeCount={activeFilters} onClear={clear} />
+      </WikiFilterPanel>
       <StatsBar count={list.length} total={data.monsters.length} label="monstros" capped={CAP} />
       {list.length === 0 ? (
         <div class="empty-state">Nenhum monstro encontrado.</div>
@@ -122,7 +140,7 @@ export function BestiaryPage(_props: { path?: string }) {
                   </span>
                 ) : null}
                 {m.bestiaryRace && m.bestiaryRace !== 'NONE' && (
-                  <span class="tag">{m.bestiaryRace}</span>
+                  <span class="tag">{raceLabel(m.bestiaryRace)}</span>
                 )}
                 {(m.loot || []).length > 0 && (
                   <span class="tag">{m.loot!.length} drops</span>

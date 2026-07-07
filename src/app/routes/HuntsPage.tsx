@@ -2,7 +2,7 @@ import { useMemo, useState } from 'preact/hooks';
 import { useWiki } from '../../context/WikiContext';
 import { useDetail } from '../../context/DetailContext';
 import { PageHeader } from '../../components/PageHeader';
-import { HuntFilters, type HuntFilterState } from '../../components/HuntFilters';
+import { HuntFilters, DEFAULT_HUNT_FILTERS, type HuntFilterState } from '../../components/HuntFilters';
 import { HuntCard } from '../../components/HuntCard';
 import {
   buildCalcSettings,
@@ -15,18 +15,10 @@ import { matchQuery } from '../../lib/format';
 export function HuntsPage(_props: { path?: string }) {
   const { data, indexes } = useWiki();
   const { openDetail } = useDetail();
-  const [filters, setFilters] = useState<HuntFilterState>({
-    charLevel: 50,
-    partySize: 1,
-    vocation: 'ALL',
-    sort: 'xp',
-    minXpHour: 0,
-    minProfitHour: 0,
-    hidePremium: false,
-    query: '',
-  });
+  const [filters, setFilters] = useState<HuntFilterState>({ ...DEFAULT_HUNT_FILTERS });
 
   const patch = (p: Partial<HuntFilterState>) => setFilters((s) => ({ ...s, ...p }));
+  const clearFilters = () => setFilters({ ...DEFAULT_HUNT_FILTERS, query: filters.query });
 
   const results = useMemo(() => {
     const settings = buildCalcSettings(
@@ -39,7 +31,7 @@ export function HuntsPage(_props: { path?: string }) {
     let list = (data.hunts || [])
       .filter((h) => {
         if (filters.hidePremium && h.isPremmium) return false;
-        if (!isHuntEligible(h, filters.charLevel)) return false;
+        if (filters.charLevel > 0 && !isHuntEligible(h, filters.charLevel)) return false;
         if (q) {
           const matchTitle = matchQuery(h.title, q) || matchQuery(h.id, q);
           const matchMon = (h.monsters || []).some(
@@ -84,13 +76,17 @@ export function HuntsPage(_props: { path?: string }) {
         searchInputId="hunt-search"
         searchPlaceholder="Hunt ou criatura…"
       />
-      <HuntFilters state={filters} onChange={patch} />
+      <HuntFilters state={filters} onChange={patch} onClear={clearFilters} />
       <div class="stats-bar">
         <span>
           <strong>{results.length}</strong> hunts elegíveis
         </span>
         <span>
-          Level <strong class="stat-gold">{filters.charLevel}</strong> ·{' '}
+          Level{' '}
+          <strong class="stat-gold">
+            {filters.charLevel > 0 ? filters.charLevel : '—'}
+          </strong>{' '}
+          ·{' '}
           {filters.partySize === 1 ? 'Solo' : filters.partySize === 2 ? 'Duo' : 'Party x4'}
         </span>
       </div>

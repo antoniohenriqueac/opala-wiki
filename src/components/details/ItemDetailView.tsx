@@ -1,6 +1,7 @@
 import { SpriteIcon } from '../SpriteIcon';
 import { StatRow } from '../ResBars';
 import { fmt, fmtChance, chanceClass, itemCategory } from '../../lib/format';
+import { handLabelLong } from '../../lib/item-filters';
 import type { Item, WikiData } from '../../lib/types';
 import type { WikiIndexes } from '../../lib/indexes';
 import type { DetailTarget } from '../../context/DetailContext';
@@ -20,6 +21,7 @@ function numField(obj: Item, key: string): number | undefined {
 export function ItemDetailView({ it, data, indexes, openDetail }: Props) {
   const drops = indexes.dropsByItem[it.id] || [];
   const cat = itemCategory(it);
+  const hands = handLabelLong(it);
 
   const attrs = [
     { l: 'Ataque', v: it.atk },
@@ -37,6 +39,7 @@ export function ItemDetailView({ it, data, indexes, openDetail }: Props) {
     },
     { l: 'Venda NPC', v: it.npcSellPrice != null ? `${it.npcSellPrice.toLocaleString('pt-BR')} gp` : undefined },
     { l: 'Peso', v: it.weight != null ? `${it.weight}g` : undefined },
+    { l: 'Mãos', v: hands ?? undefined },
   ].filter((x) => x.v != null);
 
   const bonus = [
@@ -87,6 +90,7 @@ export function ItemDetailView({ it, data, indexes, openDetail }: Props) {
           <div class="sub">
             #{it.id} · {cat}
             {it.weaponType ? ` · ${it.weaponType}` : ''}
+            {hands ? ` · ${hands}` : ''}
             {it.slot ? ` · ${it.slot}` : ''}
             {it.weight ? ` · ${it.weight}g` : ''}
           </div>
@@ -101,6 +105,11 @@ export function ItemDetailView({ it, data, indexes, openDetail }: Props) {
               </span>
             ))}
             {it.levelMin && <span class="tag">lvl {it.levelMin}+</span>}
+            {hands && (
+              <span class={`tag hand-tag hand-tag-${hands === 'Duas mãos' ? '2h' : '1h'}`}>
+                {hands === 'Duas mãos' ? '2H' : '1H'}
+              </span>
+            )}
             {it.damageType && <span class="tag">{it.damageType}</span>}
           </div>
         </div>

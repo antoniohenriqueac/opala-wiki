@@ -2146,6 +2146,9 @@ body::-webkit-scrollbar-button,
 .item-hover-drop { color: var(--text-dim); margin-left: auto; }
 
 .tag.level-tag { color: var(--gold); border-color: rgba(232, 200, 114, 0.35); }
+.tag.hand-tag { font-weight: 600; }
+.tag.hand-tag-1h { color: #93c5fd; border-color: rgba(147, 197, 253, 0.35); }
+.tag.hand-tag-2h { color: #fbbf24; border-color: rgba(251, 191, 36, 0.35); }
 
 /* Profit summary */
 .profit-summary { margin: 1rem 0 1.25rem; padding: 1rem; }
@@ -2323,6 +2326,180 @@ body::-webkit-scrollbar-button,
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text);
+}
+
+/* ── Wiki filters (shared layout) ── */
+.wiki-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  margin-bottom: 1.5rem;
+  padding: 1.15rem 1.25rem 1rem;
+}
+
+.wiki-filters-row {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) minmax(200px, 1fr);
+  gap: 1.25rem 2rem;
+  align-items: start;
+}
+
+.wiki-filters-row-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem 1.5rem;
+  align-items: start;
+}
+
+.wiki-filters-split {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 1rem 1.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.wiki-filter-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.wiki-filter-label {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+}
+
+.wiki-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.wiki-filters .chip-sm {
+  padding: 0.38rem 0.72rem;
+  font-size: 0.78rem;
+  border-radius: 8px;
+}
+
+.wiki-filters .chip-sm.active {
+  background: rgba(201, 162, 75, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(201, 162, 75, 0.35);
+}
+
+.wiki-filter-block-compact .wiki-chip-row {
+  flex-wrap: nowrap;
+}
+
+.wiki-filters-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border);
+}
+
+.wiki-filter-count {
+  margin-right: auto;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.wiki-filters .clear-filters {
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  background: transparent;
+}
+
+.wiki-filters .clear-filters:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+  background: var(--bg-muted);
+}
+
+.wiki-filters .wiki-field-input {
+  width: 100%;
+  max-width: 7rem;
+  padding: 0.45rem 0.55rem;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.wiki-filters select.wiki-field-input {
+  max-width: 10rem;
+  cursor: pointer;
+}
+
+.wiki-filters .hand-chip-1h.active {
+  color: #93c5fd;
+  border-color: rgba(147, 197, 253, 0.55);
+  background: rgba(147, 197, 253, 0.1);
+}
+
+.wiki-filters .hand-chip-2h.active {
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.55);
+  background: rgba(251, 191, 36, 0.1);
+}
+
+/* Items page specifics */
+.items-level-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.items-level-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.items-level-inputs input {
+  width: 4.5rem;
+  padding: 0.45rem 0.55rem;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.items-level-sep {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.wiki-filters-row.items-filters-top {
+  grid-template-columns: minmax(220px, 320px) 1fr;
+}
+
+.wiki-filters .quest-chip-premium.active {
+  color: #c4b5fd;
+  border-color: rgba(196, 181, 253, 0.55);
+  background: rgba(196, 181, 253, 0.1);
+}
+
+@media (max-width: 960px) {
+  .wiki-filters-row,
+  .wiki-filters-row-3,
+  .wiki-filters-split {
+    grid-template-columns: 1fr;
+  }
+
+  .wiki-filter-block-compact .wiki-chip-row {
+    flex-wrap: wrap;
+  }
 }
 
 .muted { color: var(--text-dim); }

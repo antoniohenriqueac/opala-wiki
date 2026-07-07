@@ -3,7 +3,13 @@ import { useWiki } from '../../context/WikiContext';
 import { useDetail } from '../../context/DetailContext';
 import { PageHeader } from '../../components/PageHeader';
 import { SpriteIcon } from '../../components/SpriteIcon';
-import { ClearFiltersButton, StatsBar } from '../../components/FilterHelpers';
+import { StatsBar } from '../../components/FilterHelpers';
+import {
+  FilterBlock,
+  FilterChipRow,
+  FilterFooter,
+  WikiFilterPanel,
+} from '../../components/WikiFilterLayout';
 import { matchQuery, questTypeSummary, MISSION_TYPE_LABEL, getQuestIconItemId } from '../../lib/format';
 import type { Quest } from '../../lib/types';
 
@@ -52,6 +58,9 @@ export function QuestsPage(_props: { path?: string }) {
     setQuestType(null);
   };
 
+  const activeFilters =
+    (premium !== 'all' ? 1 : 0) + (questType ? 1 : 0);
+
   return (
     <>
       <PageHeader
@@ -62,28 +71,29 @@ export function QuestsPage(_props: { path?: string }) {
         searchInputId="quests-search"
         searchPlaceholder="Nome da missão…"
       />
-      <div class="filter-panel panel">
-        <div class="field">
-          <label>Acesso</label>
-          <div class="chip-group">
-            {(['all', 'free', 'premium'] as const).map((p) => (
-              <button
-                key={p}
-                type="button"
-                class={`chip${premium === p ? ' active' : ''}`}
-                onClick={() => setPremium(p)}
-              >
-                {p === 'all' ? 'Todas' : p === 'free' ? 'Free' : 'Premium'}
-              </button>
-            ))}
-          </div>
+      <WikiFilterPanel>
+        <div class="wiki-filters-row">
+          <FilterBlock label="Acesso">
+            <FilterChipRow>
+              {(['all', 'free', 'premium'] as const).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  class={`chip chip-sm${premium === p ? ' active' : ''}${p === 'premium' ? ' quest-chip-premium' : ''}`}
+                  onClick={() => setPremium(p)}
+                >
+                  {p === 'all' ? 'Todas' : p === 'free' ? 'Grátis' : 'Premium'}
+                </button>
+              ))}
+            </FilterChipRow>
+          </FilterBlock>
         </div>
-        <div class="field">
-          <label>Tipo de missão</label>
-          <div class="chip-group">
+
+        <FilterBlock label="Tipo de missão">
+          <FilterChipRow>
             <button
               type="button"
-              class={`chip${!questType ? ' active' : ''}`}
+              class={`chip chip-sm${!questType ? ' active' : ''}`}
               onClick={() => setQuestType(null)}
             >
               Todos
@@ -92,16 +102,17 @@ export function QuestsPage(_props: { path?: string }) {
               <button
                 key={t}
                 type="button"
-                class={`chip${questType === t ? ' active' : ''}`}
+                class={`chip chip-sm${questType === t ? ' active' : ''}`}
                 onClick={() => setQuestType(questType === t ? null : t)}
               >
                 {MISSION_TYPE_LABEL[t] || t}
               </button>
             ))}
-          </div>
-        </div>
-        <ClearFiltersButton onClear={clear} />
-      </div>
+          </FilterChipRow>
+        </FilterBlock>
+
+        <FilterFooter activeCount={activeFilters} onClear={clear} />
+      </WikiFilterPanel>
       <StatsBar
         count={list.length}
         total={(data.quests || []).length}
