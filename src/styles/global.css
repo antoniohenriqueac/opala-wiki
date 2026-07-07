@@ -225,13 +225,46 @@ button {
   }
 
   .page-header {
-    top: calc(2.5rem + 1.1rem + env(safe-area-inset-top, 0px));
-    margin: -1rem -0.85rem 1rem;
-    padding: 0.85rem 0.85rem 0.75rem;
+    position: static;
+    top: auto;
+    margin: -1rem -0.85rem 0.65rem;
+    padding: 0.5rem 0.85rem 0.65rem;
+    backdrop-filter: none;
+    background: transparent;
+    border-bottom: none;
   }
 
   .page-header h1 {
-    font-size: 1.45rem;
+    font-size: 1.25rem;
+    margin: 0 0 0.15rem;
+  }
+
+  .page-header p {
+    display: none;
+  }
+
+  .page-header-inner {
+    gap: 0.5rem;
+  }
+
+  .search-bar-header .search-bar-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    margin: 0;
+  }
+
+  .search-bar-header input {
+    padding: 0.5rem 0.75rem 0.5rem 2.15rem;
+    font-size: 0.88rem;
+    box-shadow: none;
+  }
+
+  .search-bar-header .search-bar-field::before {
+    left: 0.7rem;
+    font-size: 0.95rem;
   }
 
   .panel {
@@ -253,8 +286,17 @@ button {
     padding: 0.85rem;
   }
 
+  .hunt-card-icon {
+    min-height: 104px;
+    margin: 0.1rem 0 0.2rem;
+  }
+
   .search-bar-kbd {
     display: none;
+  }
+
+  .search-bar {
+    min-width: 0;
   }
 
   .wiki-filters {

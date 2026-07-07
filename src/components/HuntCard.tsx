@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'preact/hooks';
 import type { HuntMetrics } from '../lib/hunt-metrics';
 import { fmtGpPerHourRange, fmtXpPerHourFromRaw } from '../lib/format';
 import { XP_DEFAULTS } from '../lib/xp-calculator';
@@ -12,6 +13,16 @@ interface HuntCardProps {
 
 export function HuntCard({ metrics, onClick }: HuntCardProps) {
   const { data } = useWiki();
+  const [heroSpriteSize, setHeroSpriteSize] = useState(64);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const sync = () => setHeroSpriteSize(mq.matches ? 96 : 64);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
   const { hunt, monsters, xpPerHourLow, xpPerHourHigh, profitPerHourLow, profitPerHourHigh } =
     metrics;
   const firstMon = monsters[0];
@@ -25,7 +36,7 @@ export function HuntCard({ metrics, onClick }: HuntCardProps) {
             kind="monster"
             imageName={firstMon.image}
             animated
-            size={64}
+            size={heroSpriteSize}
             assets={data.monAssets}
           />
         )}
