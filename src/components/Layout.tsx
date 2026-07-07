@@ -6,6 +6,9 @@ import { isModifiedClick, useRouter } from '../context/RouterContext';
 const DONATE_PIX_URL =
   'https://nubank.com.br/cobrar/5hux2/6a4aa55b-32b6-44ca-a71f-85d7fc5ef765';
 
+/** Set to true when the TC shop should appear in the sidebar. */
+const COINS_SHOP_VISIBLE = false;
+
 const NAV: Array<{ href: string; label: string; icon?: string; iconSrc?: string; badge?: string }> = [
   { href: '/hunts', label: 'Hunt Finder', icon: '⚔' },
   { href: '/bestiary', label: 'Bestiário', icon: '👹' },
@@ -13,7 +16,7 @@ const NAV: Array<{ href: string; label: string; icon?: string; iconSrc?: string;
   { href: '/quests', label: 'Missões', icon: '📜' },
   { href: '/exp-share', label: 'Exp Share', icon: '⚡' },
   { href: '/coins', label: 'Compre/Venda TC', iconSrc: 'tc-coin.png', badge: 'BETA' },
-];
+].filter((item) => COINS_SHOP_VISIBLE || item.href !== '/coins');
 
 interface LayoutProps {
   path?: string;
