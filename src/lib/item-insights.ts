@@ -83,6 +83,7 @@ export function countInsightsByCategory(): Record<ItemUtilityCategory | 'total',
     quest: 0,
     craft: 0,
     outfit: 0,
+    mount: 0,
     other: 0,
     total: 0,
   };

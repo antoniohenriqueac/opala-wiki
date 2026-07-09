@@ -31,6 +31,20 @@ function imb(
   };
 }
 
+function mount(
+  label: string,
+  detail: string,
+  superficialPrice = false,
+): ItemInsight {
+  return {
+    category: 'mount',
+    label,
+    summary: `Item usado para obter montaria (${label}).`,
+    detail,
+    superficialPrice,
+  };
+}
+
 /** Curated item utility map — itemId → insight */
 export const ITEM_INSIGHTS_DATA: Record<string, ItemInsight> = {
   // ── Life Leech ──
@@ -141,4 +155,71 @@ export const ITEM_INSIGHTS_DATA: Record<string, ItemInsight> = {
     detail: 'Item de addon/outfit. Não se vende ao NPC pelo valor real que representa para quem completa looks.',
     superficialPrice: false,
   },
+
+  // ── Montaria ──
+  '246': mount(
+    'Donkey',
+    'Carrot on a Stick — item clássico para domar a montaria Donkey. Valor vem da utilidade, não do NPC.',
+    true,
+  ),
+  '305': mount(
+    'Dragonling',
+    'Decorative Ribbon — o Dragonling se submete ao portador e vira montaria leal.',
+    false,
+  ),
+  '367': mount(
+    'Draptor',
+    'Harness — o Draptor se submete ao portador e vira montaria leal.',
+    false,
+  ),
+  '368': mount(
+    'Panda',
+    'Bamboo Leaves — o Panda se submete ao portador e vira montaria leal.',
+    false,
+  ),
+  '614': mount(
+    'Montaria rara',
+    'Spiritual Horseshoe — ferradura espiritual usada para domar montaria rara.',
+    false,
+  ),
+  '969': mount(
+    'Montaria (Carlin)',
+    'Maxilla Maximus — entregue ao ermitão perto de Carlin na quest de montaria.',
+    false,
+  ),
+  '987': mount(
+    'Montaria (Carlin)',
+    'Sweet Smelling Bait — isca usada na quest de montaria com o ermitão de Carlin.',
+    false,
+  ),
+  '1025': mount(
+    'Montaria (Carlin)',
+    'Control Unit — componente da quest de montaria com o ermitão de Carlin.',
+    false,
+  ),
+  '1096': mount(
+    'Montaria (Carlin)',
+    'Iron Loadstone — item da quest de montaria com o ermitão de Carlin.',
+    false,
+  ),
+  '1097': mount(
+    'Montaria (Carlin)',
+    'Glow Wine — item da quest de montaria com o ermitão de Carlin.',
+    false,
+  ),
+  '1100': mount(
+    'Montaria (Carlin)',
+    'Slingshot — item da quest de montaria com o ermitão de Carlin.',
+    false,
+  ),
+  '1166': mount(
+    'Montaria (Carlin)',
+    'Leather Whip — item da quest de montaria com o ermitão de Carlin.',
+    false,
+  ),
+  '1327': mount(
+    'Montaria (Carlin)',
+    'Giant Shrimp — item da quest de montaria com o ermitão de Carlin.',
+    false,
+  ),
 };

@@ -1,4 +1,4 @@
-export type ItemUtilityCategory = 'imbuement' | 'quest' | 'craft' | 'outfit' | 'other';
+export type ItemUtilityCategory = 'imbuement' | 'quest' | 'craft' | 'outfit' | 'mount' | 'other';
 
 export type ImbuementSubtype =
   | 'life_leech'
@@ -25,6 +25,7 @@ export const UTILITY_CATEGORY_LABELS: Record<ItemUtilityCategory, string> = {
   quest: 'Missão',
   craft: 'Craft',
   outfit: 'Outfit',
+  mount: 'Montaria',
   other: 'Outros',
 };
 
@@ -34,6 +35,7 @@ export const UTILITY_FILTER_OPTIONS: Array<{ id: UtilityFilter; label: string }>
   { id: 'quest', label: 'Missão' },
   { id: 'craft', label: 'Craft' },
   { id: 'outfit', label: 'Outfit' },
+  { id: 'mount', label: 'Montaria' },
   { id: 'other', label: 'Outros' },
 ];
 

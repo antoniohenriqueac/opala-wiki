@@ -2109,6 +2109,17 @@ body::-webkit-scrollbar-button,
   color: #f9a8d4;
 }
 
+.item-insight-mount {
+  border-color: rgba(52, 211, 153, 0.45);
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.08), var(--bg-muted));
+}
+
+.item-insight-mount .item-insight-badge {
+  border-color: rgba(52, 211, 153, 0.55);
+  background: rgba(52, 211, 153, 0.12);
+  color: #6ee7b7;
+}
+
 .stat-grid.wide {
   grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
 }
@@ -2671,6 +2682,15 @@ body::-webkit-scrollbar-button,
   color: #f9a8d4;
 }
 
+.utility-badge-mount {
+  border-color: rgba(52, 211, 153, 0.45);
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.12), rgba(52, 211, 153, 0.04));
+}
+
+.utility-badge-mount .utility-badge-label {
+  color: #6ee7b7;
+}
+
 .utility-badge-other .utility-badge-label {
   color: var(--text-muted);
 }
@@ -2699,6 +2719,12 @@ body::-webkit-scrollbar-button,
   background: rgba(244, 114, 182, 0.1);
 }
 
+.utility-tag-mount {
+  color: #6ee7b7;
+  border-color: rgba(52, 211, 153, 0.45);
+  background: rgba(52, 211, 153, 0.1);
+}
+
 .utility-tag-other {
   color: var(--text-muted);
   border-color: var(--border-strong);
@@ -2725,6 +2751,12 @@ body::-webkit-scrollbar-button,
   background: rgba(244, 114, 182, 0.12);
   color: #f9a8d4;
   border-color: rgba(244, 114, 182, 0.45);
+}
+
+.wiki-filters .utility-chip-mount.active {
+  background: rgba(52, 211, 153, 0.12);
+  color: #6ee7b7;
+  border-color: rgba(52, 211, 153, 0.45);
 }
 
 /* Profit summary */
