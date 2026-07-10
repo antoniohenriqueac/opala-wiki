@@ -30,7 +30,8 @@ export function HuntsPage(_props: { path?: string }) {
 
     let list = (data.hunts || [])
       .filter((h) => {
-        if (filters.hidePremium && h.isPremmium) return false;
+        if (filters.premiumFilter === 'free' && h.isPremmium) return false;
+        if (filters.premiumFilter === 'premium' && !h.isPremmium) return false;
         if (filters.charLevel > 0 && !isHuntEligible(h, filters.charLevel)) return false;
         if (q) {
           const matchTitle = matchQuery(h.title, q) || matchQuery(h.id, q);
@@ -60,6 +61,8 @@ export function HuntsPage(_props: { path?: string }) {
         (a.hunt.recommendedLevel || 0) - (b.hunt.recommendedLevel || 0),
       name: (a: typeof list[0], b: typeof list[0]) =>
         a.hunt.title.localeCompare(b.hunt.title),
+      mobs: (a: typeof list[0], b: typeof list[0]) =>
+        (b.monsters.length || 0) - (a.monsters.length || 0),
     }[filters.sort];
 
     list.sort(cmp);
@@ -79,7 +82,7 @@ export function HuntsPage(_props: { path?: string }) {
       <HuntFilters state={filters} onChange={patch} onClear={clearFilters} />
       <div class="stats-bar">
         <span>
-          <strong>{results.length}</strong> hunts elegíveis
+          <strong>{results.length}</strong> hunts encontradas
         </span>
         <span>
           Level{' '}

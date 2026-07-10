@@ -6,6 +6,8 @@ import {
   WikiFilterPanel,
 } from './WikiFilterLayout';
 
+export type PremiumFilter = 'all' | 'free' | 'premium';
+
 export interface HuntFilterState {
   charLevel: number;
   partySize: PartySize;
@@ -13,7 +15,7 @@ export interface HuntFilterState {
   sort: HuntSort;
   minXpHour: number;
   minProfitHour: number;
-  hidePremium: boolean;
+  premiumFilter: PremiumFilter;
   query: string;
 }
 
@@ -21,10 +23,10 @@ export const DEFAULT_HUNT_FILTERS: HuntFilterState = {
   charLevel: 0,
   partySize: 1,
   vocation: 'ALL',
-  sort: 'xp',
+  sort: 'level',
   minXpHour: 0,
   minProfitHour: 0,
-  hidePremium: false,
+  premiumFilter: 'all',
   query: '',
 };
 
@@ -35,10 +37,17 @@ interface HuntFiltersProps {
 }
 
 const SORTS: { id: HuntSort; label: string }[] = [
+  { id: 'level', label: 'Por nível' },
+  { id: 'name', label: 'Nome A–Z' },
+  { id: 'mobs', label: 'Mais criaturas' },
   { id: 'xp', label: 'Melhor raw xp' },
   { id: 'profit', label: 'Melhor gp/h' },
-  { id: 'level', label: 'Level' },
-  { id: 'name', label: 'Nome' },
+];
+
+const PREMIUM: { id: PremiumFilter; label: string }[] = [
+  { id: 'all', label: 'Todas' },
+  { id: 'free', label: 'Free' },
+  { id: 'premium', label: 'Premium' },
 ];
 
 const VOCATIONS: { id: Vocation; label: string }[] = [
@@ -57,7 +66,7 @@ function countActiveFilters(state: HuntFilterState): number {
   if (state.sort !== DEFAULT_HUNT_FILTERS.sort) n++;
   if (state.minXpHour > 0) n++;
   if (state.minProfitHour > 0) n++;
-  if (state.hidePremium) n++;
+  if (state.premiumFilter !== DEFAULT_HUNT_FILTERS.premiumFilter) n++;
   return n;
 }
 
@@ -97,16 +106,16 @@ export function HuntFilters({ state, onChange, onClear }: HuntFiltersProps) {
           </FilterChipRow>
         </FilterBlock>
 
-        <FilterBlock label="Vocação">
+        <FilterBlock label="Conta">
           <FilterChipRow>
-            {VOCATIONS.map((v) => (
+            {PREMIUM.map((p) => (
               <button
-                key={v.id}
+                key={p.id}
                 type="button"
-                class={`chip chip-sm${state.vocation === v.id ? ' active' : ''}`}
-                onClick={() => onChange({ vocation: v.id })}
+                class={`chip chip-sm${state.premiumFilter === p.id ? ' active' : ''}`}
+                onClick={() => onChange({ premiumFilter: p.id })}
               >
-                {v.label}
+                {p.label}
               </button>
             ))}
           </FilterChipRow>
@@ -123,6 +132,21 @@ export function HuntFilters({ state, onChange, onClear }: HuntFiltersProps) {
               onClick={() => onChange({ sort: s.id })}
             >
               {s.label}
+            </button>
+          ))}
+        </FilterChipRow>
+      </FilterBlock>
+
+      <FilterBlock label="Vocação">
+        <FilterChipRow>
+          {VOCATIONS.map((v) => (
+            <button
+              key={v.id}
+              type="button"
+              class={`chip chip-sm${state.vocation === v.id ? ' active' : ''}`}
+              onClick={() => onChange({ vocation: v.id })}
+            >
+              {v.label}
             </button>
           ))}
         </FilterChipRow>
@@ -157,18 +181,6 @@ export function HuntFilters({ state, onChange, onClear }: HuntFiltersProps) {
               })
             }
           />
-        </FilterBlock>
-
-        <FilterBlock label="Opções">
-          <FilterChipRow>
-            <button
-              type="button"
-              class={`chip chip-sm${state.hidePremium ? ' active' : ''}`}
-              onClick={() => onChange({ hidePremium: !state.hidePremium })}
-            >
-              Ocultar Premium
-            </button>
-          </FilterChipRow>
         </FilterBlock>
       </div>
 

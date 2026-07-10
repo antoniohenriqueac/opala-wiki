@@ -9,6 +9,7 @@ import { QuestsPage } from './routes/QuestsPage';
 import { CoinsPage } from './routes/CoinsPage';
 import { ExpSharePage } from './routes/ExpSharePage';
 import { RmtKkPage } from './routes/RmtKkPage';
+import { HomePage } from './routes/HomePage';
 import { appRoute, resolveRoute, toAppPath } from '../lib/paths';
 
 function currentRouterUrl(): string {
@@ -16,7 +17,8 @@ function currentRouterUrl(): string {
 }
 
 function renderPage(path: string) {
-  if (path === '/' || path.startsWith('/hunts')) return <HuntsPage />;
+  if (path === '/') return <HomePage />;
+  if (path.startsWith('/hunts')) return <HuntsPage />;
   if (path.startsWith('/bestiary')) return <BestiaryPage />;
   if (path.startsWith('/items')) return <ItemsPage />;
   if (path.startsWith('/quests')) return <QuestsPage />;

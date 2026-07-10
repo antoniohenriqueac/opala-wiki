@@ -134,7 +134,7 @@ export interface WikiData {
 }
 
 export type PartySize = 1 | 2 | 4;
-export type HuntSort = 'xp' | 'profit' | 'level' | 'name';
+export type HuntSort = 'xp' | 'profit' | 'level' | 'name' | 'mobs';
 export type Vocation = 'ALL' | 'KNIGHT' | 'PALADIN' | 'SORCERER' | 'DRUID';
 
 export interface XPCalcSettings {
