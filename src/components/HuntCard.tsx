@@ -4,6 +4,7 @@ import { XP_DEFAULTS } from '../lib/xp-calculator';
 import { SpriteIcon, monsterHasWalkAnimation } from './SpriteIcon';
 import { RespawnTag } from './RespawnTag';
 import { useWiki } from '../context/WikiContext';
+import { getHuntBestElements } from '../lib/hunt-elements';
 
 interface HuntCardProps {
   metrics: HuntMetrics;
@@ -15,6 +16,7 @@ export function HuntCard({ metrics, onClick }: HuntCardProps) {
   const { hunt, monsters, xpPerHourLow, xpPerHourHigh, profitPerHourLow, profitPerHourHigh } =
     metrics;
   const firstMon = monsters[0];
+  const bestElements = getHuntBestElements(hunt, monsters, 2);
 
   return (
     <div class="card" onClick={onClick}>
@@ -51,6 +53,20 @@ export function HuntCard({ metrics, onClick }: HuntCardProps) {
           stopClick
         />
       </div>
+      {bestElements.length > 0 && (
+        <div class="hunt-element-row">
+          {bestElements.map((el) => (
+            <span
+              class="hunt-element-chip"
+              key={el.key}
+              title={`Fraco a ${el.label} (média ponderada ${Math.round(el.score * 100)}%)`}
+            >
+              <span class="hunt-element-dot" style={{ background: el.color }} />
+              {el.label}
+            </span>
+          ))}
+        </div>
+      )}
       <div class="monster-row">
         {monsters.slice(0, 4).map((m) => (
           <span class="monster-chip" key={m.id}>

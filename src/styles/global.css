@@ -780,6 +780,34 @@ button {
 .hunt-metrics .xp { color: var(--xp); }
 .hunt-metrics .gp { color: var(--profit); }
 
+.hunt-element-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+}
+
+.hunt-element-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
+  padding: 0.12rem 0.45rem 0.12rem 0.35rem;
+  border-radius: 999px;
+}
+
+.hunt-element-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .monster-row {
   display: flex;
   gap: 0.35rem;
