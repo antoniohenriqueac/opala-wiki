@@ -9,44 +9,75 @@ export type DetailTarget =
   | { type: 'quest'; data: Quest }
   | null;
 
+type NonNullDetailTarget = Exclude<DetailTarget, null>;
+
+function syncDetailUrl(target: NonNullDetailTarget) {
+  const key =
+    target.type === 'monster'
+      ? 'monster'
+      : target.type === 'item'
+        ? 'item'
+        : target.type === 'quest'
+          ? 'quest'
+          : 'hunt';
+  const url = new URL(window.location.href);
+  url.searchParams.delete('monster');
+  url.searchParams.delete('item');
+  url.searchParams.delete('quest');
+  url.searchParams.delete('hunt');
+  url.searchParams.set(key, String(target.data.id));
+  window.history.replaceState({}, '', url);
+}
+
+function clearDetailUrl() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete('monster');
+  url.searchParams.delete('item');
+  url.searchParams.delete('quest');
+  url.searchParams.delete('hunt');
+  window.history.replaceState({}, '', url);
+}
+
 interface DetailContextValue {
   detail: DetailTarget;
-  openDetail: (target: DetailTarget) => void;
+  canGoBack: boolean;
+  openDetail: (target: DetailTarget, options?: { reset?: boolean }) => void;
+  goBack: () => void;
   closeDetail: () => void;
 }
 
 const DetailContext = createContext<DetailContextValue | null>(null);
 
 export function DetailProvider({ children }: { children: preact.ComponentChildren }) {
-  const [detail, setDetail] = useState<DetailTarget>(null);
+  const [stack, setStack] = useState<NonNullDetailTarget[]>([]);
+  const detail = stack.length > 0 ? stack[stack.length - 1] : null;
+  const canGoBack = stack.length > 1;
 
-  const openDetail = useCallback((target: DetailTarget) => {
-    setDetail(target);
-    if (target) {
-      const key = target.type === 'monster' ? 'monster' : target.type === 'item' ? 'item' : target.type === 'quest' ? 'quest' : 'hunt';
-      const id = target.data.id;
-      const url = new URL(window.location.href);
-      url.searchParams.delete('monster');
-      url.searchParams.delete('item');
-      url.searchParams.delete('quest');
-      url.searchParams.delete('hunt');
-      url.searchParams.set(key, String(id));
-      window.history.replaceState({}, '', url);
-    }
+  const openDetail = useCallback((target: DetailTarget, options?: { reset?: boolean }) => {
+    if (!target) return;
+    setStack((prev) => {
+      const next = options?.reset || prev.length === 0 ? [target] : [...prev, target];
+      syncDetailUrl(target);
+      return next;
+    });
+  }, []);
+
+  const goBack = useCallback(() => {
+    setStack((prev) => {
+      if (prev.length <= 1) return prev;
+      const next = prev.slice(0, -1);
+      syncDetailUrl(next[next.length - 1]);
+      return next;
+    });
   }, []);
 
   const closeDetail = useCallback(() => {
-    setDetail(null);
-    const url = new URL(window.location.href);
-    url.searchParams.delete('monster');
-    url.searchParams.delete('item');
-    url.searchParams.delete('quest');
-    url.searchParams.delete('hunt');
-    window.history.replaceState({}, '', url);
+    setStack([]);
+    clearDetailUrl();
   }, []);
 
   return (
-    <DetailContext.Provider value={{ detail, openDetail, closeDetail }}>
+    <DetailContext.Provider value={{ detail, canGoBack, openDetail, goBack, closeDetail }}>
       {children}
     </DetailContext.Provider>
   );

@@ -16,16 +16,16 @@ export function useDeepLinks() {
 
     if (monster) {
       const m = indexes.monById[+monster];
-      if (m) openDetail({ type: 'monster', data: m });
+      if (m) openDetail({ type: 'monster', data: m }, { reset: true });
     } else if (item) {
       const it = indexes.itemById[+item];
-      if (it) openDetail({ type: 'item', data: it });
+      if (it) openDetail({ type: 'item', data: it }, { reset: true });
     } else if (quest) {
       const q = indexes.questById[+quest];
-      if (q) openDetail({ type: 'quest', data: q });
+      if (q) openDetail({ type: 'quest', data: q }, { reset: true });
     } else if (hunt) {
       const h = indexes.huntById[+hunt];
-      if (h) openDetail({ type: 'hunt', data: h });
+      if (h) openDetail({ type: 'hunt', data: h }, { reset: true });
     }
   }, [data, indexes, openDetail]);
 }

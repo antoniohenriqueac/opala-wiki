@@ -7,16 +7,18 @@ import { ItemDetailView } from './details/ItemDetailView';
 import { QuestDetailView } from './details/QuestDetailView';
 
 export function DetailDrawer() {
-  const { detail, closeDetail, openDetail } = useDetail();
+  const { detail, canGoBack, goBack, closeDetail, openDetail } = useDetail();
   const { data, indexes } = useWiki();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeDetail();
+      if (e.key !== 'Escape') return;
+      if (canGoBack) goBack();
+      else closeDetail();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [closeDetail]);
+  }, [canGoBack, goBack, closeDetail]);
 
   if (!detail) return null;
 
@@ -47,9 +49,16 @@ export function DetailDrawer() {
         role="dialog"
         aria-modal="true"
       >
-        <button type="button" class="drawer-close" onClick={closeDetail} aria-label="Fechar">
-          ×
-        </button>
+        <div class="drawer-toolbar">
+          {canGoBack && (
+            <button type="button" class="drawer-back" onClick={goBack} aria-label="Voltar">
+              ← Voltar
+            </button>
+          )}
+          <button type="button" class="drawer-close" onClick={closeDetail} aria-label="Fechar">
+            ×
+          </button>
+        </div>
         {body}
       </div>
     </>
