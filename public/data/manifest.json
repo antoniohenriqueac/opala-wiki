@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-10-30T12:18:40.579Z",
+  "lastUpdated": "2026-10-31T11:52:57.250Z",
   "source": "stonegy-extract",
   "counts": {
     "items": 1801,
@@ -8,6 +8,6 @@
     "quests": 13
   },
   "hashes": {
-    "wiki_data": "54107f44c802db6b39c75f0867eaf3295a4fd9241f1ce831ce304d88a1eac3e3"
+    "wiki_data": "9bcce2ebb4ba2f0f76a23c26c5137426ce9be5fef2297992438fea9ba5ded72e"
   }
 }
